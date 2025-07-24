@@ -1,126 +1,117 @@
-==============================
-Marketo Program Dashboard
-==============================
+autotoolkit.io - Marketo Program Manager
+This web application provides a custom toolkit for managing Adobe Marketo Engage program assets. It offers a user-friendly interface to search for programs, view all their associated assets (emails, campaigns, landing pages, etc.), and perform actions like activating or approving them.
 
-Last Updated: July 22, 2025
+The application is built with a vanilla JavaScript frontend and a Node.js backend, using Firebase for user authentication and data storage.
 
-## Table of Contents
+Tech Stack
+Frontend
+HTML5: Structure of the web pages.
 
-1.  Overview
-2.  Features
-3.  Technology Stack
-4.  Project Structure
-5.  Setup and Installation
-6.  API Endpoints
-7.  Notes for Developers
+Tailwind CSS: For all styling and layout.
 
----
+Vanilla JavaScript (ES6 Modules): Handles all client-side logic, including DOM manipulation, API calls, and dynamic UI components.
 
-### 1. Overview
+Firebase Client SDK: Manages user authentication (sign-up, login, logout) directly in the browser.
 
-This is a full-stack web application that provides a dashboard for interacting with the Marketo REST API. It allows users to search for a Marketo program by name and view all of its associated assets in a single, organized interface. The primary goal is to provide a tool for managing and performing bulk status changes on assets within a program, such as activating campaigns or approving emails.
+Backend
+Node.js: JavaScript runtime environment.
 
-The application operates as a single-page interface powered by a Node.js backend that securely communicates with the Marketo API.
+Express.js: Web server framework for handling API routes and serving static files.
 
----
+Firebase Admin SDK: Securely interacts with Firebase services (like Firestore) from the server.
 
-### 2. Features
+Database & Services
+Firebase Authentication: For secure user sign-up and login.
 
-* **Marketo Authentication**: The backend handles OAuth 2.0 authentication with the Marketo API and automatically caches the access token to optimize API calls.
-* **Program Search**: Users can search for any Marketo program by its exact name.
-* **Comprehensive Asset View**: Fetches and displays a wide range of assets from a program, including:
-    * Batch & Trigger Smart Campaigns
-    * Emails
-    * Landing Pages
-    * Forms
-    * Smart Lists & Static Lists
-* **Interactive UI**:
-    * **Tabbed Interface**: Open multiple programs in different tabs for easy comparison and management.
-    * **Filtering & Sorting**: Filter the asset list by type and sort by name, type, or status.
-    * **Individual Actions**: Use UI toggles to activate/deactivate campaigns or approve/unapprove emails and landing pages individually.
-    * **Bulk Actions**: Select multiple assets and perform bulk status changes (e.g., Approve All, Deactivate All).
+Firestore: NoSQL database used to store user profile information.
 
----
+Adobe Marketo Engage API: The external API that this toolkit interacts with.
 
-### 3. Technology Stack
+File Structure
+marketo-editor/
+├── .env                  # Stores secret API keys for Marketo
+├── .gitignore            # Specifies files for Git to ignore (VERY IMPORTANT)
+├── serviceAccountKey.json # Firebase Admin private key (DO NOT COMMIT)
+├── package.json          # Lists project dependencies
+├── node_modules/         # Directory where npm packages are installed
+│
+├── js/
+│   ├── server.js         # The Node.js/Express backend server
+│   ├── firebase-init.js  # Centralized Firebase configuration for the frontend
+│   └── shared-ui.js      # Dynamically loads the shared header/nav bar
+│
+└── public/
+    ├── css/
+    │   └── styles.css    # Custom CSS styles
+    ├── index.html        # Main landing page
+    ├── dashboard.html    # Hub page after login
+    ├── marketo-app.html  # The core Marketo program management tool
+    ├── login.html        # User login page
+    └── sign-up.html      # User sign-up page
 
-* **Backend**:
-    * **Runtime**: Node.js
-    * **Framework**: Express.js
-    * **Dependencies**:
-        * `axios`: For making HTTP requests to the Marketo API.
-        * `cors`: To handle Cross-Origin Resource Sharing.
-        * `dotenv`: To manage environment variables for credentials.
-* **Frontend**:
-    * **Languages**: HTML5, CSS, Vanilla JavaScript (ES6+)
-    * **Styling**: Tailwind CSS (loaded via CDN)
-* **API**:
-    * Interacts directly with the Marketo REST API for all asset and program data.
+Setup and Installation
+Follow these steps to get the project running on your local machine.
 
----
+Prerequisites
+Node.js installed
 
-### 4. Project Structure
+Git installed
 
-/
-|-- server.js           # Main backend server file, handles all API logic.
-|-- index.html          # The single-page frontend application. Contains all UI and client-side logic.
-|-- .env                # (Required, not provided) Stores Marketo API credentials.
-|-- package.json        # (Implied) Lists backend dependencies.
-|-- /public
-    |-- styles.css      # (Implied) Custom styles for the application.
+A Firebase project with Authentication and Firestore enabled.
 
----
+1. Clone the Repository
+If your code is on GitHub, clone it to your local machine:
 
-### 5. Setup and Installation
+git clone <your-repository-url>
+cd marketo-editor
 
-1.  **Install Dependencies**: Navigate to the project root and run:
-    `npm install`
+2. Install Dependencies
+Install the required Node.js modules:
 
-2.  **Create Environment File**: Create a `.env` file in the project root. This is required for API authentication. Add the following variables with your Marketo instance details:
-    `MUNCHKIN_ID=your-munchkin-id`
-    `CLIENT_ID=your-client-id`
-    `CLIENT_SECRET=your-client-secret`
-    `PORT=3001`
+npm install express axios cors dotenv firebase-admin
 
-3.  **Start the Server**: Run the following command from the project root:
-    `node server.js`
+3. Environment Variables
+Create a file named .env in the root of the project and add your Marketo API credentials:
 
-4.  **Access the Application**: Open your web browser and navigate to `http://localhost:3001` (or the port you specified in your `.env` file).
+MUNCHKIN_ID=your-marketo-munchkin-id
+CLIENT_ID=your-marketo-api-client-id
+CLIENT_SECRET=your-marketo-api-client-secret
 
----
+4. Firebase Configuration
+A. Service Account Key (Backend)
 
-### 6. API Endpoints
+Go to your Firebase project settings and generate a private key for your service account.
 
-The `server.js` file exposes the following REST endpoints for the frontend to consume.
+Download the resulting JSON file.
 
-* `GET /api/programs/search?name=<programName>`
-    * Searches for a program by name and returns its details along with a comprehensive list of all associated assets.
+Rename it to serviceAccountKey.json and place it in the root of the project directory.
 
-* `POST /api/campaigns/:id/activate`
-    * Activates the specified Smart Campaign.
+Security Warning: This file is highly sensitive. The .gitignore file is configured to prevent it from being uploaded to GitHub. Never share it publicly.
 
-* `POST /api/campaigns/:id/deactivate`
-    * Deactivates the specified Smart Campaign.
+B. Firebase Config (Frontend)
 
-* `POST /api/emails/:id/approve`
-    * Approves the specified email draft.
+Open the js/firebase-init.js file.
 
-* `POST /api/emails/:id/unapprove`
-    * Unapproves the specified email.
+Find the firebaseConfig object.
 
-* `POST /api/landingPages/:id/approve`
-    * Approves the specified landing page draft.
+Paste your web app's Firebase configuration keys, which you can find in your Firebase project settings.
 
-* `POST /api/landingPages/:id/unapprove`
-    * Unapproves the specified landing page.
+Running the Application
+Open your terminal and navigate to the project's root directory (marketo-editor).
 
-* `POST /api/assets/bulk-action`
-    * Performs an action ('approve' or 'unapprove') on a list of assets sent in the request body.
+Start the server with the following command:
 
----
+node js/server.js
 
-### 7. Notes for Developers
+The server will start, and you can access the application by opening a web browser and navigating to http://localhost:3001.
 
-* **Missing Endpoint**: The frontend code in `index.html` attempts to call a `/api/instance/info` endpoint to display API usage statistics on the home page. This endpoint is **not** defined in the provided `server.js` file. It will need to be implemented for the "Instance Information" section to function correctly.
-* **Error Handling**: The backend includes basic error handling that forwards messages from the Marketo API to the frontend. The frontend displays these messages in a designated error div.
-* **Static Files**: The server is configured to serve static files from a `/public` directory. This is where `styles.css` should be placed.
+Key Modules & Dependencies
+express: Backend web framework.
+
+axios: For making HTTP requests to the Marketo API from the server.
+
+cors: Express middleware to enable Cross-Origin Resource Sharing.
+
+dotenv: Loads environment variables from the .env file.
+
+firebase-admin: Allows the backend server to securely interact with Firebase services.
