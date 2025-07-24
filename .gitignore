@@ -1,0 +1,13 @@
+# Node.js dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Firebase service account key
+# IMPORTANT: Never commit this file to a public repository
+serviceAccountKey.json
+
+# Operating System files
+.DS_Store
+Thumbs.db

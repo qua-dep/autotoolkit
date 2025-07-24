@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .status-dot {
+            transition: background-color 0.3s ease;
+        }
+        .btn {
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Server Control Panel</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Manage your `server.js` instance.</p>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-8">
+            <span id="status-dot" class="w-4 h-4 rounded-full bg-gray-400 mr-3 status-dot"></span>
+            <span id="status-text" class="text-lg font-medium text-gray-700 dark:text-gray-200">Checking...</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button id="startButton" class="btn w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800">
+                Start Server
+            </button>
+            <button id="stopButton" class="btn w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800">
+                Stop Server
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        // Function to update the UI based on server status
+        const updateUI = (isRunning) => {
+            if (isRunning) {
+                statusDot.classList.remove('bg-gray-400', 'bg-red-500');
+                statusDot.classList.add('bg-green-500');
+                statusText.textContent = 'Server is Running';
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            } else {
+                statusDot.classList.remove('bg-gray-400', 'bg-green-500');
+                statusDot.classList.add('bg-red-500');
+                statusText.textContent = 'Server is Stopped';
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        };
+
+        // Function to check the server status from the backend
+        const checkStatus = async () => {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                updateUI(data.isRunning);
+            } catch (error) {
+                console.error('Error checking status:', error);
+                statusText.textContent = 'Control Panel Offline';
+                statusDot.classList.remove('bg-green-500', 'bg-red-500');
+                statusDot.classList.add('bg-gray-400');
+                startButton.disabled = true;
+                stopButton.disabled = true;
+            }
+        };
+
+        // Event listener for the start button
+        startButton.addEventListener('click', async () => {
+            try {
+                await fetch('/start', { method: 'POST' });
+                await checkStatus();
+            } catch (error) {
+                console.error('Error starting server:', error);
+            }
+        });
+
+        // Event listener for the stop button
+        stopButton.addEventListener('click', async () => {
+            try {
+                await fetch('/stop', { method: 'POST' });
+                await checkStatus();
+            } catch (error) {
+                console.error('Error stopping server:', error);
+            }
+        });
+
+        // Initial status check when the page loads
+        document.addEventListener('DOMContentLoaded', checkStatus);
+    </script>
+
+</body>
+</html>

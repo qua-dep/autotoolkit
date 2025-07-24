@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketo Program Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-white text-black font-sans">
+
+  <!-- The header will be injected here by shared-ui.js -->
+
+  <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page-specific Header and Navigation -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-black">Marketo Programs</h1>
+        <nav id="main-nav" class="mt-4 flex items-center gap-2 border-b border-gray-200">
+            <button data-page="programTools" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">Program Tools</button>
+            <button data-page="assetSearch" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">Asset Search</button>
+            <button data-page="history" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">History</button>
+        </nav>
+    </div>
+
+    <main>
+        <!-- Asset Search Page Layout -->
+        <div id="page-assetSearch" class="page-content hidden">
+            <div class="flex h-[calc(100vh-250px)] border border-gray-200 rounded-lg shadow-sm bg-white">
+                <!-- Left Panel: Search -->
+                <div id="search-panel" class="w-1/3 h-full flex flex-col border-r border-gray-200 bg-white">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-black">Global Asset Search</h2>
+                        <div class="relative mt-2">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <input type="text" id="live-search-input" class="form-input w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Search assets by name...">
+                        </div>
+                    </div>
+                    <div id="live-search-results" class="flex-grow overflow-y-auto p-2">
+                        <div class="p-4 text-center text-sm text-gray-500">Start typing to search for assets.</div>
+                    </div>
+                </div>
+                <!-- Right Panel: Detail View -->
+                <div id="detail-container" class="w-2/3 h-full overflow-y-auto p-6">
+                     <div id="detail-view-content" class="h-full">
+                        <div class="flex items-center justify-center h-full text-center">
+                            <p class="text-gray-500">Select an item from the search results to see its details.</p>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Program Tools Page -->
+        <div id="page-programTools" class="page-content">
+            <!-- Seamless Search Bar -->
+            <div class="mb-6">
+                <form id="searchForm" class="relative flex items-center w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <input type="text" class="form-input w-full pl-10 pr-4 py-2 border border-gray-200 rounded-l-md focus:ring-blue-500 focus:border-blue-500 border-r-0" id="programName" placeholder="Search by program name..." required>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-r-md shadow-sm flex items-center justify-center" type="submit">
+                      Search
+                    </button>
+                </form>
+            </div>
+
+            <div id="loader" class="hidden my-8 flex justify-center items-center gap-3">
+                <div class="spinner h-8 w-8 rounded-full border-4 border-gray-200"></div>
+                <span class="text-gray-600">Searching...</span>
+            </div>
+
+            <div id="errorMessage" class="hidden my-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md"></div>
+            
+            <!-- Main Content Panel with Tabs -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                <div id="tab-container" class="border-b border-gray-200">
+                    <div id="tab-bar" class="flex px-4">
+                        <!-- Tabs will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div id="tab-content-container">
+                    <!-- Tab content will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- History Page Layout -->
+        <div id="page-history" class="page-content hidden">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-black">Activity History</h2>
+                </div>
+                <div id="history-log-container" class="p-6 space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+                    <!-- History items will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </main>
+  </div>
+
+  <script>
+    // --- App State (No changes) ---
+    let currentPage = 'programTools';
+    let tabs = [];
+    let activeTabId = null;
+    let activeSearchResultItem = null;
+    let searchTimeout = null;
+
+    // --- DOM Element References (No changes) ---
+    const mainNav = document.getElementById('main-nav');
+    const pages = document.querySelectorAll('.page-content');
+    const searchForm = document.getElementById('searchForm');
+    const programNameInput = document.getElementById('programName');
+    const loader = document.getElementById('loader');
+    const errorMessageDiv = document.getElementById('errorMessage');
+    const tabBar = document.getElementById('tab-bar');
+    const tabContentContainer = document.getElementById('tab-content-container');
+    const liveSearchInput = document.getElementById('live-search-input');
+    const liveSearchResults = document.getElementById('live-search-results');
+    const detailViewContent = document.getElementById('detail-view-content');
+
+    // --- Icons and Labels (No changes) ---
+    const icons = {
+        program: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>`,
+        email: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
+        smartCampaignTrigger: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`,
+        smartCampaignBatch: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>`,
+        landingPage: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
+        form: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>`,
+        smartList: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>`,
+        list: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>`
+    };
+    const assetTypeLabels = {
+        program: 'Program', email: 'Email', smartCampaignTrigger: 'Trigger Campaign',
+        smartCampaignBatch: 'Batch Campaign', landingPage: 'Landing Page', form: 'Form',
+        smartList: 'Smart List', list: 'List'
+    };
+
+    // --- All other page-specific logic remains the same ---
+    // ... (omitted for brevity) ...
+    function logActivity(description) {
+        const historyLog = JSON.parse(localStorage.getItem('activityHistory')) || [];
+        const newEntry = {
+            description: description,
+            timestamp: new Date().toISOString()
+        };
+        historyLog.unshift(newEntry);
+        if (historyLog.length > 100) {
+            historyLog.pop();
+        }
+        localStorage.setItem('activityHistory', JSON.stringify(historyLog));
+    }
+    function renderHistory() {
+        const historyLog = JSON.parse(localStorage.getItem('activityHistory')) || [];
+        const container = document.getElementById('history-log-container');
+        container.innerHTML = '';
+        if (historyLog.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">No activity recorded yet.</p>';
+            return;
+        }
+        historyLog.forEach(entry => {
+            const entryEl = document.createElement('div');
+            entryEl.className = 'flex items-start text-sm pb-4 border-b border-gray-100';
+            const date = new Date(entry.timestamp);
+            const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+            entryEl.innerHTML = `<div class="w-2 h-2 bg-gray-300 rounded-full mt-1.5 mr-4 flex-shrink-0"></div><div><p class="text-black">${entry.description}</p><p class="text-xs text-gray-500">${formattedDate}</p></div>`;
+            container.appendChild(entryEl);
+        });
+    }
+    function getAssetTypeLabel(asset) {
+        if (asset.assetType === 'smartCampaign') {
+            return asset.type === 'batch' ? assetTypeLabels.smartCampaignBatch : assetTypeLabels.smartCampaignTrigger;
+        }
+        return assetTypeLabels[asset.assetType] || asset.assetType.charAt(0).toUpperCase() + asset.assetType.slice(1);
+    }
+    function showLoader() { loader.classList.remove('hidden'); errorMessageDiv.classList.add('hidden'); }
+    function hideLoader() { loader.classList.add('hidden'); }
+    function showError(message) { errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden'); }
+    function navigateTo(pageName) {
+        currentPage = pageName;
+        pages.forEach(page => {
+            if (page.id === `page-${pageName}`) {
+                page.classList.remove('hidden');
+            } else {
+                page.classList.add('hidden');
+            }
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.dataset.page === pageName) {
+                link.classList.add('border-blue-600', 'text-blue-600');
+                link.classList.remove('border-transparent', 'text-gray-500');
+            } else {
+                link.classList.remove('border-blue-600', 'text-blue-600');
+                link.classList.add('border-transparent', 'text-gray-500');
+            }
+        });
+        if (pageName === 'history') {
+            renderHistory();
+        }
+    }
+    async function performLiveSearch(query) {
+        if (query.length < 3) {
+            liveSearchResults.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">Enter at least 3 characters.</div>';
+            return;
+        }
+        liveSearchResults.innerHTML = '<div class="p-4 flex justify-center items-center"><div class="spinner h-6 w-6"></div></div>';
+        try {
+            const res = await fetch(`/api/assets/search?query=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error((await res.json()).message);
+            logActivity(`Performed global asset search for: "${query}"`);
+            renderSearchResults(await res.json());
+        } catch (err) {
+            liveSearchResults.innerHTML = `<p class="p-4 text-red-500">Error: ${err.message}</p>`;
+        }
+    }
+    function renderSearchResults(results) {
+        liveSearchResults.innerHTML = '';
+        if (results.length === 0) {
+            liveSearchResults.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No assets found.</div>';
+            return;
+        }
+        results.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'search-result-item flex items-center p-2 rounded-md';
+            itemEl.dataset.id = item.id; itemEl.dataset.type = item.assetType;
+            itemEl.innerHTML = `<div class="w-5 h-5 flex-shrink-0 mx-1">${icons[item.assetType] || icons.program}</div><div class="flex flex-col truncate ml-2"><span class="text-sm truncate font-medium">${item.name}</span><span class="text-xs text-gray-500">${getAssetTypeLabel(item)}</span></div>`;
+            itemEl.addEventListener('click', () => {
+                if (activeSearchResultItem) activeSearchResultItem.classList.remove('active');
+                itemEl.classList.add('active');
+                activeSearchResultItem = itemEl;
+                displayAssetDetails(item.assetType, item.id);
+            });
+            liveSearchResults.appendChild(itemEl);
+        });
+    }
+    async function displayAssetDetails(assetType, assetId) {
+        detailViewContent.innerHTML = `<div class="flex items-center justify-center h-full"><div class="spinner h-8 w-8"></div></div>`;
+        try {
+            const res = await fetch(`/api/asset/${assetType}/${assetId}`);
+            if (!res.ok) throw new Error((await res.json()).message);
+            const data = await res.json();
+            const assetForLabel = { assetType: assetType, type: data.type };
+            let detailsHtml = `<h3 class="text-xl font-bold text-black mb-1">${data.name}</h3><p class="text-sm text-gray-500 mb-6">ID: ${data.id} | Type: ${getAssetTypeLabel(assetForLabel)}</p><div class="space-y-4"><div class="bg-gray-50 border border-gray-200 rounded-lg p-4"><h4 class="font-semibold text-md mb-3">Key Information</h4><dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">${['status', 'channel', 'createdAt', 'updatedAt', 'url'].map(key => data[key] ? `<dt class="font-medium text-gray-600">${key.charAt(0).toUpperCase() + key.slice(1)}</dt><dd class="text-black">${data[key]}</dd>` : '').join('')}</dl></div><div class="bg-gray-50 border border-gray-200 rounded-lg p-4"><h4 class="font-semibold text-md mb-3">All Data (JSON)</h4><pre class="bg-gray-800 text-white p-3 rounded text-xs whitespace-pre-wrap max-h-96 overflow-auto">${JSON.stringify(data, null, 2)}</pre></div></div>`;
+            detailViewContent.innerHTML = detailsHtml;
+        } catch (err) {
+            detailViewContent.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-red-500">Could not load details: ${err.message}</p></div>`;
+        }
+    }
+    function createTabContent(tabId) {
+        const content = document.createElement('div');
+        content.id = `tab-content-${tabId}`;
+        content.className = 'tab-content hidden';
+        content.innerHTML = `<div class="p-6"><div class="programDetails grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6"></div><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-gray-50"><tr><th class="p-4 text-left"><input type="checkbox" class="selectAllCheckbox h-4 w-4 text-blue-600 rounded"></th><th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="assetType"><div class="flex items-center">Asset Type <span class="sort-icon ml-2"></span></div></th><th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="name"><div class="flex items-center">Name <span class="sort-icon ml-2"></span></div></th><th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="status"><div class="flex items-center">Status <span class="sort-icon ml-2"></span></div></th><th class="p-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead><tbody class="assetList bg-white divide-y divide-gray-200"></tbody></table></div><div class="noAssetsMessage hidden p-6 text-center text-gray-500">No assets found in this program.</div></div>`;
+        tabContentContainer.appendChild(content);
+        addEventListenersToTab(content);
+    }
+    function renderUI() {
+        tabBar.innerHTML = '';
+        tabs.forEach(tab => {
+            const tabButton = document.createElement('button');
+            const isActive = activeTabId === tab.id;
+            tabButton.className = `tab-button text-sm font-medium border-b-2 py-3 px-4 flex items-center ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;
+            if(isActive) tabButton.style.marginBottom = '-1px';
+            tabButton.dataset.tabId = tab.id;
+            tabButton.innerHTML = `<span>${tab.program.name}</span><button data-close-id="${tab.id}" class="close-tab-btn ml-3 text-gray-400 hover:text-gray-600">&times;</button>`;
+            tabBar.appendChild(tabButton);
+        });
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        if (activeTabId) {
+            const activeContent = document.getElementById(`tab-content-${activeTabId}`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+                const activeTab = getActiveTab();
+                renderProgramDetails(activeTab.program);
+                applyFiltersAndSort();
+            }
+        }
+    }
+    function getActiveTab() { return tabs.find(t => t.id === activeTabId); }
+    function renderProgramDetails(program) {
+        const content = document.querySelector(`#tab-content-${activeTabId} .programDetails`);
+        if (!content) return;
+        content.innerHTML = `<div><p class="text-sm text-gray-500">Name</p><p class="font-medium text-black">${program.name}</p></div><div><p class="text-sm text-gray-500">ID</p><p class="font-medium text-black">${program.id}</p></div><div><p class="text-sm text-gray-500">Channel</p><p class="font-medium text-black">${program.channel}</p></div>`;
+    }
+    function applyFiltersAndSort() {
+        const tab = getActiveTab();
+        if (!tab) return;
+        let processedAssets = [...tab.assets];
+        processedAssets = processedAssets.filter(asset => {
+            if (asset.assetType === 'smartCampaign') {
+                if (asset.type === 'batch' && tab.activeFilters.has('smartCampaignBatch')) return true;
+                if (asset.type === 'trigger' && tab.activeFilters.has('smartCampaignTrigger')) return true;
+                return false;
+            }
+            return tab.activeFilters.has(asset.assetType);
+        });
+        processedAssets.sort((a, b) => {
+            let valA, valB;
+            const col = tab.currentSort.column;
+            if (col === 'name') valA = a.name.toLowerCase(), valB = b.name.toLowerCase();
+            else if (col === 'status') {
+                const getStatusValue = (asset) => {
+                    if (asset.assetType === 'smartCampaign') return asset.type === 'batch' && asset.schedule ? 'scheduled' : (asset.isActive ? 'active' : 'inactive');
+                    if (asset.assetType === 'email' || asset.assetType === 'landingPage') return asset.status === 'approved' || asset.status === 'approved with draft' ? 'approved' : 'not approved';
+                    return 'n/a';
+                };
+                valA = getStatusValue(a), valB = getStatusValue(b);
+            } else if (col === 'assetType') valA = getAssetTypeLabel(a), valB = getAssetTypeLabel(b);
+            let comparison = valA.localeCompare(valB);
+            if (comparison === 0 && col !== 'name') comparison = a.name.localeCompare(b.name);
+            return tab.currentSort.direction === 'asc' ? comparison : comparison * -1;
+        });
+        renderAssets(processedAssets);
+        updateSortHeaders();
+    }
+    function renderAssets(assets) {
+        const tab = getActiveTab();
+        const content = document.getElementById(`tab-content-${tab.id}`);
+        if (!content) return;
+        const assetListBody = content.querySelector('.assetList');
+        const noAssetsMessage = content.querySelector('.noAssetsMessage');
+        assetListBody.innerHTML = '';
+        if (assets.length === 0) {
+            noAssetsMessage.classList.remove('hidden');
+            assetListBody.closest('table').classList.add('hidden');
+            return;
+        }
+        noAssetsMessage.classList.add('hidden');
+        assetListBody.closest('table').classList.remove('hidden');
+        assets.forEach(asset => {
+            const row = document.createElement('tr');
+            row.id = `asset-${asset.id}`;
+            let statusHtml = '<span class="text-gray-400">-</span>';
+            let toggleHtml = '<span class="text-gray-400">-</span>';
+            let actionIconHtml = ''; 
+            let iconHtml = ''; 
+            let labelHtml = getAssetTypeLabel(asset);
+            let checkboxHtml = '';
+            const isActionable = asset.assetType === 'smartCampaign' || asset.assetType === 'email' || asset.assetType === 'landingPage';
+            if (isActionable) {
+                checkboxHtml = `<input type="checkbox" data-asset-id="${asset.id}" class="h-4 w-4 text-blue-600 border-gray-300 rounded asset-checkbox" ${tab.selectedAssets.has(asset.id.toString()) ? 'checked' : ''}>`;
+                const isChecked = asset.assetType === 'smartCampaign' ? asset.isActive : (asset.status === 'approved' || asset.status === 'approved with draft');
+                const assetTypeForToggle = asset.assetType === 'smartCampaign' ? 'campaign' : asset.assetType;
+                toggleHtml = `<div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" data-asset-type="${assetTypeForToggle}" data-action-toggle id="toggle-${asset.id}" class="absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer peer transition-transform duration-200 ease-in-out checked:translate-x-4 checked:border-blue-600" ${isChecked ? 'checked' : ''}/><label for="toggle-${asset.id}" class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out peer-checked:bg-blue-600"></label></div>`;
+            }
+            if (asset.assetType === 'smartCampaign') {
+                const isActive = asset.isActive;
+                let statusText = isActive ? 'Active' : 'Inactive';
+                let statusColor = isActive ? 'bg-green-500' : 'bg-gray-400';
+                if (asset.type === 'batch' && asset.schedule && new Date(asset.schedule.nextRun) > new Date()) {
+                    statusText = 'Scheduled';
+                    statusColor = 'bg-blue-500';
+                }
+                statusHtml = `<div class="flex items-center"><div class="h-2.5 w-2.5 rounded-full ${statusColor} mr-2"></div>${statusText}</div>`;
+                iconHtml = asset.type === 'batch' ? icons.smartCampaignBatch : icons.smartCampaignTrigger;
+            } else if (asset.assetType === 'email' || asset.assetType === 'landingPage') {
+                const isApproved = asset.status === 'approved' || asset.status === 'approved with draft';
+                const statusColor = isApproved ? 'bg-green-500' : 'bg-gray-400';
+                statusHtml = `<div class="flex items-center"><div class="h-2.5 w-2.5 rounded-full ${statusColor} mr-2"></div>${isApproved ? 'Approved' : 'Not Approved'}</div>`;
+                iconHtml = icons[asset.assetType] || '';
+                if (isApproved) {
+                    actionIconHtml = `<div class="relative group"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.031-1.742 3.031H4.42c-1.532 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg><div class="absolute bottom-full right-0 mb-2 w-64 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">This asset may be in use and unable to unapprove. Please check the asset details in Marketo and refresh here before continuing.</div></div>`;
+                }
+            } else {
+                 iconHtml = icons[asset.assetType] || '';
+            }
+            row.innerHTML = `<td class="p-4">${checkboxHtml}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600"><div class="flex items-center"><div class="w-5 h-5 mr-3">${iconHtml}</div><span>${labelHtml}</span></div></td><td class="p-4 whitespace-nowrap text-sm font-medium text-black">${asset.name}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600">${statusHtml}</td><td class="p-4 text-center"><div class="inline-flex items-center justify-center h-6"><div class="flex-shrink-0">${toggleHtml}</div><div class="w-5 ml-2 flex items-center justify-center">${actionIconHtml}</div></div></td>`;
+            assetListBody.appendChild(row);
+        });
+    }
+    function updateSortHeaders() {
+        const tab = getActiveTab();
+        const content = document.getElementById(`tab-content-${tab.id}`);
+        if (!content) return;
+        content.querySelectorAll('th[data-sort]').forEach(th => {
+            th.classList.remove('bg-gray-100');
+            const icon = th.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = '';
+        });
+        const activeTh = content.querySelector(`th[data-sort="${tab.currentSort.column}"]`);
+        if (activeTh) {
+            activeTh.classList.add('bg-gray-100');
+            const icon = activeTh.querySelector('.sort-icon');
+            if (icon) icon.innerHTML = tab.currentSort.direction === 'asc' ? '▲' : '▼';
+        }
+    }
+    function updateBulkActionBar() {
+        const tab = getActiveTab();
+        const content = document.getElementById(`tab-content-${tab.id}`);
+        if (!content) return;
+        const bulkActionBar = content.querySelector('.bulkActionBar');
+        const selectionCount = content.querySelector('.selectionCount');
+        if (tab.selectedAssets.size > 0) {
+            selectionCount.textContent = `${tab.selectedAssets.size} selected`;
+            bulkActionBar.classList.remove('hidden');
+        } else {
+            bulkActionBar.classList.add('hidden');
+        }
+    }
+    async function performBulkAction(action) {
+        const tab = getActiveTab();
+        const assetsToUpdate = tab.assets.filter(asset => tab.selectedAssets.has(asset.id.toString()));
+        try {
+            const res = await fetch('/api/assets/bulk-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assets: assetsToUpdate, action })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Bulk action failed');
+            await performSearch(tab.program.name, false);
+        } catch (err) {
+            showError(`Error: ${err.message}`);
+        }
+    }
+    async function performSearch(programName, switchTabs = true) {
+        if (tabs.length >= 5 && !tabs.find(t => t.program.name === programName)) {
+            showError("You can only have a maximum of 5 tabs open.");
+            setTimeout(() => errorMessageDiv.classList.add('hidden'), 5000);
+            return;
+        }
+        if (switchTabs) {
+            const existingTab = tabs.find(t => t.program.name === programName);
+            if (existingTab) {
+                activeTabId = existingTab.id;
+                renderUI();
+                return;
+            }
+        }
+        showLoader();
+        try {
+            const res = await fetch(`/api/programs/search?name=${encodeURIComponent(programName)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'An unknown error occurred.');
+            logActivity(`Searched for program: "${programName}"`);
+            const tabId = data.program.id;
+            const existingTabIndex = tabs.findIndex(t => t.id === tabId);
+            const newTab = {
+                id: tabId,
+                program: data.program,
+                assets: data.assets,
+                currentSort: { column: 'name', direction: 'asc' },
+                activeFilters: new Set(['smartCampaignBatch', 'smartCampaignTrigger', 'email', 'landingPage', 'form', 'smartList', 'list']),
+                selectedAssets: new Set()
+            };
+            if (existingTabIndex > -1) {
+                tabs[existingTabIndex] = newTab;
+            } else {
+                tabs.push(newTab);
+                createTabContent(tabId);
+            }
+            activeTabId = tabId;
+            renderUI();
+        } catch (err) {
+            showError(`Error: ${err.message}`);
+        } finally {
+            hideLoader();
+        }
+    }
+    function addEventListenersToTab(tabContentElement) {
+        const tabId = parseInt(tabContentElement.id.replace('tab-content-', ''));
+        const tab = () => tabs.find(t => t.id === tabId);
+        tabContentElement.addEventListener('change', async function(e) {
+            if (e.target.matches('[data-action-toggle]')) {
+                const toggle = e.target;
+                const id = toggle.id.replace('toggle-', '');
+                const assetType = toggle.dataset.assetType;
+                let action, endpoint;
+                if (assetType === 'campaign') {
+                    action = toggle.checked ? 'activate' : 'deactivate';
+                    endpoint = `/api/campaigns/${id}/${action}`;
+                } else {
+                    action = toggle.checked ? 'approve' : 'unapprove';
+                    endpoint = `/api/${assetType}s/${id}/${action}`;
+                }
+                toggle.disabled = true;
+                try {
+                    const res = await fetch(endpoint, { method: 'POST' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message);
+                    const assetToUpdate = tab().assets.find(a => a.id == id);
+                    if (assetToUpdate) {
+                        logActivity(`Changed status of ${assetToUpdate.name} (${assetType} ID: ${id}) to ${action}`);
+                        if (assetType === 'campaign') assetToUpdate.isActive = (action === 'activate');
+                        else assetToUpdate.status = (action === 'approve') ? 'approved' : 'draft';
+                    }
+                    applyFiltersAndSort();
+                } catch (err) {
+                    const row = document.getElementById(`asset-${id}`);
+                    const actionCell = row.querySelector('td:last-child');
+                    const errorSpan = document.createElement('div');
+                    errorSpan.className = 'text-red-500 text-xs mt-1 action-error';
+                    errorSpan.textContent = "Action failed. Asset may be in use.";
+                    const existingError = actionCell.querySelector('.action-error');
+                    if(existingError) existingError.remove();
+                    actionCell.appendChild(errorSpan);
+                    toggle.checked = !toggle.checked;
+                    setTimeout(() => errorSpan.remove(), 5000);
+                } finally {
+                    toggle.disabled = false;
+                }
+            }
+        });
+        tabContentElement.querySelector('.selectAllCheckbox').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            const checkboxes = tabContentElement.querySelectorAll('.asset-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const assetId = checkbox.dataset.assetId;
+                if (isChecked) tab().selectedAssets.add(assetId);
+                else tab().selectedAssets.delete(assetId);
+            });
+            updateBulkActionBar();
+        });
+        tabContentElement.addEventListener('change', (e) => {
+            if (e.target.classList.contains('asset-checkbox')) {
+                const assetId = e.target.dataset.assetId;
+                if (e.target.checked) tab().selectedAssets.add(assetId);
+                else tab().selectedAssets.delete(assetId);
+                updateBulkActionBar();
+            }
+        });
+        tabContentElement.querySelector('thead').addEventListener('click', (e) => {
+            const header = e.target.closest('th[data-sort]');
+            if (!header) return;
+            const newSortColumn = header.dataset.sort;
+            if (tab().currentSort.column === newSortColumn) {
+                tab().currentSort.direction = tab().currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                tab().currentSort.column = newSortColumn;
+                tab().currentSort.direction = 'asc';
+            }
+            applyFiltersAndSort();
+        });
+    }
+    mainNav.addEventListener('click', (e) => {
+        const navButton = e.target.closest('.nav-link');
+        if (navButton && navButton.dataset.page) {
+            navigateTo(navButton.dataset.page);
+        }
+    });
+    searchForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const name = programNameInput.value.trim();
+      if (!name) return;
+      await performSearch(name);
+      programNameInput.value = '';
+    });
+    tabBar.addEventListener('click', (e) => {
+        const tabButton = e.target.closest('.tab-button');
+        const closeButton = e.target.closest('.close-tab-btn');
+        if (closeButton) {
+            e.stopPropagation();
+            const tabIdToClose = parseInt(closeButton.dataset.closeId);
+            tabs = tabs.filter(t => t.id !== tabIdToClose);
+            const tabContent = document.getElementById(`tab-content-${tabIdToClose}`);
+            if (tabContent) tabContent.remove();
+            if (activeTabId === tabIdToClose) {
+                activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
+            }
+            renderUI();
+        } else if (tabButton) {
+            activeTabId = parseInt(tabButton.dataset.tabId);
+            renderUI();
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        navigateTo('programTools'); 
+    });
+  </script>
+  <script type="module">
+    import { loadHeader } from '/js/shared-ui.js';
+    loadHeader();
+  </script>
+</body>
+</html>

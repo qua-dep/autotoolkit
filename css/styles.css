@@ -1,0 +1,35 @@
+/* --- Global Styles --- */
+body {
+    background-color: #ffffff; /* White background */
+    color: #111827; /* gray-900 */
+}
+
+/* --- Marketo App Styles --- */
+
+/* Spinner animations */
+.spinner {
+    border-top-color: #3b82f6; /* blue-500 */
+    animation: spin 1s linear infinite;
+}
+
+.refresh-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Search result item styles from Asset Search page */
+.search-result-item {
+    cursor: pointer;
+}
+.search-result-item:hover {
+    background-color: #f3f4f6; /* gray-100 */
+}
+.search-result-item.active {
+    background-color: #e5e7eb; /* gray-200 */
+    font-weight: 600;
+}
