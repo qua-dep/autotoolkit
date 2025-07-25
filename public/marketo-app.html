@@ -9,7 +9,7 @@
 </head>
 <body class="bg-white text-black font-sans">
 
-  <!-- The header will be injected here by shared-ui.js -->
+  <!-- The header is injected by shared-ui.js -->
 
   <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
     <!-- Page-specific Header and Navigation -->
@@ -23,93 +23,121 @@
     </div>
 
     <main>
-        <!-- Asset Search Page Layout -->
-        <div id="page-assetSearch" class="page-content hidden">
-            <div class="flex h-[calc(100vh-250px)] border border-gray-200 rounded-lg shadow-sm bg-white">
-                <!-- Left Panel: Search -->
-                <div id="search-panel" class="w-1/3 h-full flex flex-col border-r border-gray-200 bg-white">
-                    <div class="p-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-black">Global Asset Search</h2>
-                        <div class="relative mt-2">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                            </div>
-                            <input type="text" id="live-search-input" class="form-input w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Search assets by name...">
-                        </div>
-                    </div>
-                    <div id="live-search-results" class="flex-grow overflow-y-auto p-2">
-                        <div class="p-4 text-center text-sm text-gray-500">Start typing to search for assets.</div>
-                    </div>
-                </div>
-                <!-- Right Panel: Detail View -->
-                <div id="detail-container" class="w-2/3 h-full overflow-y-auto p-6">
-                     <div id="detail-view-content" class="h-full">
-                        <div class="flex items-center justify-center h-full text-center">
-                            <p class="text-gray-500">Select an item from the search results to see its details.</p>
-                        </div>
-                     </div>
-                </div>
-            </div>
+        <!-- No Connections Message -->
+        <div id="no-connections-message" class="hidden text-center py-16 px-6 bg-gray-50 rounded-lg border">
+            <h2 class="text-xl font-semibold text-gray-800">No Connections Found</h2>
+            <p class="text-gray-600 mt-2">To use the Marketo tools, you first need to add your Marketo instance credentials.</p>
+            <a href="/settings.html" class="mt-4 inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors">
+                Go to Settings
+            </a>
         </div>
 
-        <!-- Program Tools Page -->
-        <div id="page-programTools" class="page-content">
-            <!-- Seamless Search Bar -->
+        <!-- Main application content -->
+        <div id="app-content" class="hidden">
+            <!-- Connection Selector -->
             <div class="mb-6">
-                <form id="searchForm" class="relative flex items-center w-full">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                <label for="connection-selector" class="block text-sm font-medium text-gray-700">Select Connection</label>
+                <select id="connection-selector" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+
+             <!-- Loading Bar for connection switching -->
+            <div id="connection-loader-bar" class="hidden w-full bg-gray-200 rounded-full h-1.5 mb-4">
+              <div class="bg-blue-600 h-1.5 rounded-full" style="width: 0%; transition: width 2s ease-in-out;"></div>
+            </div>
+
+            <!-- Asset Search Page Layout -->
+            <div id="page-assetSearch" class="page-content hidden">
+                <div class="flex h-[calc(100vh-250px)] border border-gray-200 rounded-lg shadow-sm bg-white">
+                    <div id="search-panel" class="w-1/3 h-full flex flex-col border-r border-gray-200 bg-white">
+                        <div class="p-4 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-black">Global Asset Search</h2>
+                            <div class="relative mt-2">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                                </div>
+                                <input type="text" id="live-search-input" class="form-input w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Search assets by name...">
+                            </div>
+                        </div>
+                        <div id="live-search-results" class="flex-grow overflow-y-auto p-2">
+                            <div class="p-4 text-center text-sm text-gray-500">Start typing to search for assets.</div>
+                        </div>
                     </div>
-                    <input type="text" class="form-input w-full pl-10 pr-4 py-2 border border-gray-200 rounded-l-md focus:ring-blue-500 focus:border-blue-500 border-r-0" id="programName" placeholder="Search by program name..." required>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-r-md shadow-sm flex items-center justify-center" type="submit">
-                      Search
-                    </button>
-                </form>
-            </div>
-
-            <div id="loader" class="hidden my-8 flex justify-center items-center gap-3">
-                <div class="spinner h-8 w-8 rounded-full border-4 border-gray-200"></div>
-                <span class="text-gray-600">Searching...</span>
-            </div>
-
-            <div id="errorMessage" class="hidden my-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md"></div>
-            
-            <!-- Main Content Panel with Tabs -->
-            <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                <div id="tab-container" class="border-b border-gray-200">
-                    <div id="tab-bar" class="flex px-4">
-                        <!-- Tabs will be dynamically inserted here -->
+                    <div id="detail-container" class="w-2/3 h-full overflow-y-auto p-6">
+                         <div id="detail-view-content" class="h-full">
+                            <div class="flex items-center justify-center h-full text-center">
+                                <p class="text-gray-500">Select an item from the search results to see its details.</p>
+                            </div>
+                         </div>
                     </div>
                 </div>
-                <div id="tab-content-container">
-                    <!-- Tab content will be dynamically inserted here -->
+            </div>
+
+            <!-- Program Tools Page -->
+            <div id="page-programTools" class="page-content">
+                <div class="mb-6">
+                    <form id="searchForm" class="relative flex items-center w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                        </div>
+                        <input type="text" class="form-input w-full pl-10 pr-4 py-2 border border-gray-200 rounded-l-md focus:ring-blue-500 focus:border-blue-500 border-r-0" id="programName" placeholder="Search by program name..." required>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-r-md shadow-sm flex items-center justify-center" type="submit">
+                          Search
+                        </button>
+                    </form>
+                </div>
+                <div id="loader" class="hidden my-8 flex justify-center items-center gap-3">
+                    <div class="spinner h-8 w-8 rounded-full border-4 border-gray-200"></div>
+                    <span class="text-gray-600">Searching...</span>
+                </div>
+                <div id="errorMessage" class="hidden my-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md"></div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                    <div id="tab-container" class="border-b border-gray-200">
+                        <div id="tab-bar" class="flex px-4"></div>
+                    </div>
+                    <div id="tab-content-container"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- History Page Layout -->
-        <div id="page-history" class="page-content hidden">
-            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                <div class="p-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-black">Activity History</h2>
-                </div>
-                <div id="history-log-container" class="p-6 space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
-                    <!-- History items will be inserted here -->
+            <!-- History Page Layout -->
+            <div id="page-history" class="page-content hidden">
+                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-black">Activity History</h2>
+                    </div>
+                    <div id="history-log-container" class="p-6 space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto"></div>
                 </div>
             </div>
         </div>
     </main>
   </div>
 
-  <script>
-    // --- App State (No changes) ---
+  <script type="module">
+    import { auth } from '/js/firebase-init.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { loadHeader } from '/js/shared-ui.js';
+
+    loadHeader();
+
+    // --- Global State ---
+    let currentUser = null;
+    let connections = [];
+    let selectedConnectionId = null;
+    let lastSearchTerm = '';
+    
+    // --- App State ---
     let currentPage = 'programTools';
     let tabs = [];
     let activeTabId = null;
     let activeSearchResultItem = null;
     let searchTimeout = null;
-
-    // --- DOM Element References (No changes) ---
+    
+    // --- DOM Element References ---
+    const appContent = document.getElementById('app-content');
+    const noConnectionsMessage = document.getElementById('no-connections-message');
+    const connectionSelector = document.getElementById('connection-selector');
+    const connectionLoaderBar = document.getElementById('connection-loader-bar');
     const mainNav = document.getElementById('main-nav');
     const pages = document.querySelectorAll('.page-content');
     const searchForm = document.getElementById('searchForm');
@@ -122,7 +150,7 @@
     const liveSearchResults = document.getElementById('live-search-results');
     const detailViewContent = document.getElementById('detail-view-content');
 
-    // --- Icons and Labels (No changes) ---
+    // --- Icons and Labels ---
     const icons = {
         program: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>`,
         email: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
@@ -138,122 +166,158 @@
         smartCampaignBatch: 'Batch Campaign', landingPage: 'Landing Page', form: 'Form',
         smartList: 'Smart List', list: 'List'
     };
-
-    // --- All other page-specific logic remains the same ---
-    // ... (omitted for brevity) ...
-    function logActivity(description) {
-        const historyLog = JSON.parse(localStorage.getItem('activityHistory')) || [];
-        const newEntry = {
-            description: description,
-            timestamp: new Date().toISOString()
-        };
-        historyLog.unshift(newEntry);
-        if (historyLog.length > 100) {
-            historyLog.pop();
+    
+    // --- Main Auth and Connection Loading ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            await fetchConnections(user.uid);
+        } else {
+            window.location.href = '/login.html';
         }
-        localStorage.setItem('activityHistory', JSON.stringify(historyLog));
+    });
+
+    async function fetchConnections(uid) {
+        try {
+            const response = await fetch(`/api/connections/${uid}`);
+            if (!response.ok) throw new Error('Could not fetch connections.');
+            connections = await response.json();
+            
+            if (connections.length === 0) {
+                appContent.classList.add('hidden');
+                noConnectionsMessage.classList.remove('hidden');
+            } else {
+                appContent.classList.remove('hidden');
+                noConnectionsMessage.classList.add('hidden');
+                populateConnectionSelector();
+            }
+        } catch (error) {
+            console.error('Error fetching connections:', error);
+            appContent.classList.add('hidden');
+            noConnectionsMessage.classList.remove('hidden');
+            noConnectionsMessage.querySelector('p').textContent = 'An error occurred while loading your connections.';
+        }
     }
-    function renderHistory() {
-        const historyLog = JSON.parse(localStorage.getItem('activityHistory')) || [];
-        const container = document.getElementById('history-log-container');
-        container.innerHTML = '';
-        if (historyLog.length === 0) {
-            container.innerHTML = '<p class="text-gray-500">No activity recorded yet.</p>';
+
+    function populateConnectionSelector() {
+        connectionSelector.innerHTML = '';
+        connections.forEach(conn => {
+            const option = document.createElement('option');
+            option.value = conn.id;
+            option.textContent = conn.name;
+            connectionSelector.appendChild(option);
+        });
+        selectedConnectionId = connectionSelector.value;
+    }
+
+    // --- Program Search Logic ---
+    async function performSearch(programName, switchTabs = true) {
+        if (!selectedConnectionId) {
+            showError("Please select a connection first.");
             return;
         }
-        historyLog.forEach(entry => {
-            const entryEl = document.createElement('div');
-            entryEl.className = 'flex items-start text-sm pb-4 border-b border-gray-100';
-            const date = new Date(entry.timestamp);
-            const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-            entryEl.innerHTML = `<div class="w-2 h-2 bg-gray-300 rounded-full mt-1.5 mr-4 flex-shrink-0"></div><div><p class="text-black">${entry.description}</p><p class="text-xs text-gray-500">${formattedDate}</p></div>`;
-            container.appendChild(entryEl);
-        });
+        lastSearchTerm = programName; // Save for refresh
+        showLoader();
+        try {
+            const response = await fetch(`/api/programs/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: programName,
+                    uid: currentUser.uid,
+                    connectionId: selectedConnectionId
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'An unknown error occurred.');
+            
+            logActivity(`Searched for program: "${programName}"`);
+            const tabId = data.program.id;
+            const existingTabIndex = tabs.findIndex(t => t.id === tabId);
+
+            const newTab = {
+                id: tabId,
+                program: data.program,
+                assets: data.assets,
+                currentSort: { column: 'name', direction: 'asc' },
+                activeFilters: new Set(['smartCampaignBatch', 'smartCampaignTrigger', 'email', 'landingPage', 'form', 'smartList', 'list']),
+                selectedAssets: new Set()
+            };
+
+            if (existingTabIndex > -1) {
+                tabs[existingTabIndex] = newTab;
+            } else {
+                tabs.push(newTab);
+                createTabContent(tabId);
+            }
+            
+            activeTabId = tabId;
+            renderUI();
+
+        } catch (err) {
+            showError(`Error: ${err.message}`);
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // --- All other page-specific functions are restored here ---
+    function logActivity(description) {
+        const historyLog = JSON.parse(localStorage.getItem('activityHistory')) || [];
+        const newEntry = { description, timestamp: new Date().toISOString() };
+        historyLog.unshift(newEntry);
+        if (historyLog.length > 100) historyLog.pop();
+        localStorage.setItem('activityHistory', JSON.stringify(historyLog));
     }
     function getAssetTypeLabel(asset) {
         if (asset.assetType === 'smartCampaign') {
             return asset.type === 'batch' ? assetTypeLabels.smartCampaignBatch : assetTypeLabels.smartCampaignTrigger;
         }
-        return assetTypeLabels[asset.assetType] || asset.assetType.charAt(0).toUpperCase() + asset.assetType.slice(1);
+        return assetTypeLabels[asset.assetType] || asset.assetType;
     }
     function showLoader() { loader.classList.remove('hidden'); errorMessageDiv.classList.add('hidden'); }
     function hideLoader() { loader.classList.add('hidden'); }
     function showError(message) { errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden'); }
-    function navigateTo(pageName) {
-        currentPage = pageName;
-        pages.forEach(page => {
-            if (page.id === `page-${pageName}`) {
-                page.classList.remove('hidden');
-            } else {
-                page.classList.add('hidden');
-            }
-        });
-        document.querySelectorAll('.nav-link').forEach(link => {
-            if (link.dataset.page === pageName) {
-                link.classList.add('border-blue-600', 'text-blue-600');
-                link.classList.remove('border-transparent', 'text-gray-500');
-            } else {
-                link.classList.remove('border-blue-600', 'text-blue-600');
-                link.classList.add('border-transparent', 'text-gray-500');
-            }
-        });
-        if (pageName === 'history') {
-            renderHistory();
-        }
-    }
-    async function performLiveSearch(query) {
-        if (query.length < 3) {
-            liveSearchResults.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">Enter at least 3 characters.</div>';
-            return;
-        }
-        liveSearchResults.innerHTML = '<div class="p-4 flex justify-center items-center"><div class="spinner h-6 w-6"></div></div>';
-        try {
-            const res = await fetch(`/api/assets/search?query=${encodeURIComponent(query)}`);
-            if (!res.ok) throw new Error((await res.json()).message);
-            logActivity(`Performed global asset search for: "${query}"`);
-            renderSearchResults(await res.json());
-        } catch (err) {
-            liveSearchResults.innerHTML = `<p class="p-4 text-red-500">Error: ${err.message}</p>`;
-        }
-    }
-    function renderSearchResults(results) {
-        liveSearchResults.innerHTML = '';
-        if (results.length === 0) {
-            liveSearchResults.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No assets found.</div>';
-            return;
-        }
-        results.forEach(item => {
-            const itemEl = document.createElement('div');
-            itemEl.className = 'search-result-item flex items-center p-2 rounded-md';
-            itemEl.dataset.id = item.id; itemEl.dataset.type = item.assetType;
-            itemEl.innerHTML = `<div class="w-5 h-5 flex-shrink-0 mx-1">${icons[item.assetType] || icons.program}</div><div class="flex flex-col truncate ml-2"><span class="text-sm truncate font-medium">${item.name}</span><span class="text-xs text-gray-500">${getAssetTypeLabel(item)}</span></div>`;
-            itemEl.addEventListener('click', () => {
-                if (activeSearchResultItem) activeSearchResultItem.classList.remove('active');
-                itemEl.classList.add('active');
-                activeSearchResultItem = itemEl;
-                displayAssetDetails(item.assetType, item.id);
-            });
-            liveSearchResults.appendChild(itemEl);
-        });
-    }
-    async function displayAssetDetails(assetType, assetId) {
-        detailViewContent.innerHTML = `<div class="flex items-center justify-center h-full"><div class="spinner h-8 w-8"></div></div>`;
-        try {
-            const res = await fetch(`/api/asset/${assetType}/${assetId}`);
-            if (!res.ok) throw new Error((await res.json()).message);
-            const data = await res.json();
-            const assetForLabel = { assetType: assetType, type: data.type };
-            let detailsHtml = `<h3 class="text-xl font-bold text-black mb-1">${data.name}</h3><p class="text-sm text-gray-500 mb-6">ID: ${data.id} | Type: ${getAssetTypeLabel(assetForLabel)}</p><div class="space-y-4"><div class="bg-gray-50 border border-gray-200 rounded-lg p-4"><h4 class="font-semibold text-md mb-3">Key Information</h4><dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">${['status', 'channel', 'createdAt', 'updatedAt', 'url'].map(key => data[key] ? `<dt class="font-medium text-gray-600">${key.charAt(0).toUpperCase() + key.slice(1)}</dt><dd class="text-black">${data[key]}</dd>` : '').join('')}</dl></div><div class="bg-gray-50 border border-gray-200 rounded-lg p-4"><h4 class="font-semibold text-md mb-3">All Data (JSON)</h4><pre class="bg-gray-800 text-white p-3 rounded text-xs whitespace-pre-wrap max-h-96 overflow-auto">${JSON.stringify(data, null, 2)}</pre></div></div>`;
-            detailViewContent.innerHTML = detailsHtml;
-        } catch (err) {
-            detailViewContent.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-red-500">Could not load details: ${err.message}</p></div>`;
-        }
-    }
     function createTabContent(tabId) {
         const content = document.createElement('div');
         content.id = `tab-content-${tabId}`;
         content.className = 'tab-content hidden';
-        content.innerHTML = `<div class="p-6"><div class="programDetails grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6"></div><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-gray-50"><tr><th class="p-4 text-left"><input type="checkbox" class="selectAllCheckbox h-4 w-4 text-blue-600 rounded"></th><th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="assetType"><div class="flex items-center">Asset Type <span class="sort-icon ml-2"></span></div></th><th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="name"><div class="flex items-center">Name <span class="sort-icon ml-2"></span></div></th><th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="status"><div class="flex items-center">Status <span class="sort-icon ml-2"></span></div></th><th class="p-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead><tbody class="assetList bg-white divide-y divide-gray-200"></tbody></table></div><div class="noAssetsMessage hidden p-6 text-center text-gray-500">No assets found in this program.</div></div>`;
+        content.innerHTML = `<div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="programDetails grid grid-cols-1 sm:grid-cols-3 gap-6 flex-grow"></div>
+                    <div class="flex-shrink-0 ml-4">
+                        <button class="refresh-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M7 12v-2l-4 3 4 3v-2h2.997A6.006 6.006 0 0 0 16 8h-2a4 4 0 0 1-3.996 4H7zM9 2H6.003A6.006 6.006 0 0 0 0 8h2a4 4 0 0 1 3.996-4H9v2l4-3-4-3v2z" fill-rule="evenodd"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="bulkActionBar hidden bg-gray-100 p-3 rounded-md mb-4 flex items-center justify-between">
+                    <span class="selectionCount font-medium text-sm text-gray-700"></span>
+                    <div>
+                        <button data-action="activate" class="bulk-action-btn bg-green-500 hover:bg-green-600 text-white text-sm font-medium py-1 px-3 rounded-md">Activate</button>
+                        <button data-action="deactivate" class="bulk-action-btn bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-1 px-3 rounded-md ml-2">Deactivate</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-4 text-left"><input type="checkbox" class="selectAllCheckbox h-4 w-4 text-blue-600 rounded"></th>
+                                <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset Type</th>
+                                <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="p-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="assetList bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+                <div class="noAssetsMessage hidden p-6 text-center text-gray-500">No assets found in this program.</div>
+            </div>`;
         tabContentContainer.appendChild(content);
         addEventListenersToTab(content);
     }
@@ -273,196 +337,65 @@
             const activeContent = document.getElementById(`tab-content-${activeTabId}`);
             if (activeContent) {
                 activeContent.classList.remove('hidden');
-                const activeTab = getActiveTab();
+                const activeTab = tabs.find(t => t.id === activeTabId);
                 renderProgramDetails(activeTab.program);
-                applyFiltersAndSort();
+                renderAssets(activeTab.assets);
             }
+        } else {
+            tabContentContainer.innerHTML = '';
         }
     }
-    function getActiveTab() { return tabs.find(t => t.id === activeTabId); }
     function renderProgramDetails(program) {
         const content = document.querySelector(`#tab-content-${activeTabId} .programDetails`);
         if (!content) return;
         content.innerHTML = `<div><p class="text-sm text-gray-500">Name</p><p class="font-medium text-black">${program.name}</p></div><div><p class="text-sm text-gray-500">ID</p><p class="font-medium text-black">${program.id}</p></div><div><p class="text-sm text-gray-500">Channel</p><p class="font-medium text-black">${program.channel}</p></div>`;
     }
-    function applyFiltersAndSort() {
-        const tab = getActiveTab();
-        if (!tab) return;
-        let processedAssets = [...tab.assets];
-        processedAssets = processedAssets.filter(asset => {
-            if (asset.assetType === 'smartCampaign') {
-                if (asset.type === 'batch' && tab.activeFilters.has('smartCampaignBatch')) return true;
-                if (asset.type === 'trigger' && tab.activeFilters.has('smartCampaignTrigger')) return true;
-                return false;
-            }
-            return tab.activeFilters.has(asset.assetType);
-        });
-        processedAssets.sort((a, b) => {
-            let valA, valB;
-            const col = tab.currentSort.column;
-            if (col === 'name') valA = a.name.toLowerCase(), valB = b.name.toLowerCase();
-            else if (col === 'status') {
-                const getStatusValue = (asset) => {
-                    if (asset.assetType === 'smartCampaign') return asset.type === 'batch' && asset.schedule ? 'scheduled' : (asset.isActive ? 'active' : 'inactive');
-                    if (asset.assetType === 'email' || asset.assetType === 'landingPage') return asset.status === 'approved' || asset.status === 'approved with draft' ? 'approved' : 'not approved';
-                    return 'n/a';
-                };
-                valA = getStatusValue(a), valB = getStatusValue(b);
-            } else if (col === 'assetType') valA = getAssetTypeLabel(a), valB = getAssetTypeLabel(b);
-            let comparison = valA.localeCompare(valB);
-            if (comparison === 0 && col !== 'name') comparison = a.name.localeCompare(b.name);
-            return tab.currentSort.direction === 'asc' ? comparison : comparison * -1;
-        });
-        renderAssets(processedAssets);
-        updateSortHeaders();
-    }
     function renderAssets(assets) {
-        const tab = getActiveTab();
+        const tab = tabs.find(t => t.id === activeTabId);
         const content = document.getElementById(`tab-content-${tab.id}`);
         if (!content) return;
         const assetListBody = content.querySelector('.assetList');
-        const noAssetsMessage = content.querySelector('.noAssetsMessage');
         assetListBody.innerHTML = '';
-        if (assets.length === 0) {
-            noAssetsMessage.classList.remove('hidden');
-            assetListBody.closest('table').classList.add('hidden');
-            return;
-        }
-        noAssetsMessage.classList.add('hidden');
-        assetListBody.closest('table').classList.remove('hidden');
         assets.forEach(asset => {
             const row = document.createElement('tr');
             row.id = `asset-${asset.id}`;
             let statusHtml = '<span class="text-gray-400">-</span>';
             let toggleHtml = '<span class="text-gray-400">-</span>';
             let actionIconHtml = ''; 
-            let iconHtml = ''; 
+            let iconHtml = '';
             let labelHtml = getAssetTypeLabel(asset);
             let checkboxHtml = '';
             const isActionable = asset.assetType === 'smartCampaign' || asset.assetType === 'email' || asset.assetType === 'landingPage';
-            if (isActionable) {
-                checkboxHtml = `<input type="checkbox" data-asset-id="${asset.id}" class="h-4 w-4 text-blue-600 border-gray-300 rounded asset-checkbox" ${tab.selectedAssets.has(asset.id.toString()) ? 'checked' : ''}>`;
-                const isChecked = asset.assetType === 'smartCampaign' ? asset.isActive : (asset.status === 'approved' || asset.status === 'approved with draft');
-                const assetTypeForToggle = asset.assetType === 'smartCampaign' ? 'campaign' : asset.assetType;
-                toggleHtml = `<div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" data-asset-type="${assetTypeForToggle}" data-action-toggle id="toggle-${asset.id}" class="absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer peer transition-transform duration-200 ease-in-out checked:translate-x-4 checked:border-blue-600" ${isChecked ? 'checked' : ''}/><label for="toggle-${asset.id}" class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out peer-checked:bg-blue-600"></label></div>`;
-            }
+            
             if (asset.assetType === 'smartCampaign') {
-                const isActive = asset.isActive;
-                let statusText = isActive ? 'Active' : 'Inactive';
-                let statusColor = isActive ? 'bg-green-500' : 'bg-gray-400';
-                if (asset.type === 'batch' && asset.schedule && new Date(asset.schedule.nextRun) > new Date()) {
-                    statusText = 'Scheduled';
-                    statusColor = 'bg-blue-500';
-                }
-                statusHtml = `<div class="flex items-center"><div class="h-2.5 w-2.5 rounded-full ${statusColor} mr-2"></div>${statusText}</div>`;
                 iconHtml = asset.type === 'batch' ? icons.smartCampaignBatch : icons.smartCampaignTrigger;
+                statusHtml = `<div class="flex items-center"><div class="h-2.5 w-2.5 rounded-full ${asset.isActive ? 'bg-green-500' : 'bg-gray-400'} mr-2"></div>${asset.isActive ? 'Active' : 'Inactive'}</div>`;
             } else if (asset.assetType === 'email' || asset.assetType === 'landingPage') {
-                const isApproved = asset.status === 'approved' || asset.status === 'approved with draft';
-                const statusColor = isApproved ? 'bg-green-500' : 'bg-gray-400';
-                statusHtml = `<div class="flex items-center"><div class="h-2.5 w-2.5 rounded-full ${statusColor} mr-2"></div>${isApproved ? 'Approved' : 'Not Approved'}</div>`;
                 iconHtml = icons[asset.assetType] || '';
+                const isApproved = asset.status === 'approved' || asset.status === 'approved with draft';
+                statusHtml = `<div class="flex items-center"><div class="h-2.5 w-2.5 rounded-full ${isApproved ? 'bg-green-500' : 'bg-gray-400'} mr-2"></div>${isApproved ? 'Approved' : 'Not Approved'}</div>`;
                 if (isApproved) {
-                    actionIconHtml = `<div class="relative group"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.031-1.742 3.031H4.42c-1.532 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg><div class="absolute bottom-full right-0 mb-2 w-64 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">This asset may be in use and unable to unapprove. Please check the asset details in Marketo and refresh here before continuing.</div></div>`;
+                    actionIconHtml = `<div class="relative group"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.031-1.742 3.031H4.42c-1.532 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg><div class="absolute bottom-full right-0 mb-2 w-64 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">This asset may be in use. Check Marketo before unapproving.</div></div>`;
                 }
             } else {
                  iconHtml = icons[asset.assetType] || '';
             }
+
+            if (isActionable) {
+                checkboxHtml = `<input type="checkbox" data-asset-id="${asset.id}" class="asset-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded">`;
+                const isChecked = asset.assetType === 'smartCampaign' ? asset.isActive : (asset.status === 'approved' || asset.status === 'approved with draft');
+                toggleHtml = `<div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" data-asset-type="${asset.assetType === 'smartCampaign' ? 'campaign' : asset.assetType}" data-action-toggle id="toggle-${asset.id}" class="absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer peer transition-transform duration-200 ease-in-out checked:translate-x-4 checked:border-blue-600" ${isChecked ? 'checked' : ''}/><label for="toggle-${asset.id}" class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out peer-checked:bg-blue-600"></label></div>`;
+            }
+
             row.innerHTML = `<td class="p-4">${checkboxHtml}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600"><div class="flex items-center"><div class="w-5 h-5 mr-3">${iconHtml}</div><span>${labelHtml}</span></div></td><td class="p-4 whitespace-nowrap text-sm font-medium text-black">${asset.name}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600">${statusHtml}</td><td class="p-4 text-center"><div class="inline-flex items-center justify-center h-6"><div class="flex-shrink-0">${toggleHtml}</div><div class="w-5 ml-2 flex items-center justify-center">${actionIconHtml}</div></div></td>`;
             assetListBody.appendChild(row);
         });
-    }
-    function updateSortHeaders() {
-        const tab = getActiveTab();
-        const content = document.getElementById(`tab-content-${tab.id}`);
-        if (!content) return;
-        content.querySelectorAll('th[data-sort]').forEach(th => {
-            th.classList.remove('bg-gray-100');
-            const icon = th.querySelector('.sort-icon');
-            if (icon) icon.innerHTML = '';
-        });
-        const activeTh = content.querySelector(`th[data-sort="${tab.currentSort.column}"]`);
-        if (activeTh) {
-            activeTh.classList.add('bg-gray-100');
-            const icon = activeTh.querySelector('.sort-icon');
-            if (icon) icon.innerHTML = tab.currentSort.direction === 'asc' ? '▲' : '▼';
-        }
-    }
-    function updateBulkActionBar() {
-        const tab = getActiveTab();
-        const content = document.getElementById(`tab-content-${tab.id}`);
-        if (!content) return;
-        const bulkActionBar = content.querySelector('.bulkActionBar');
-        const selectionCount = content.querySelector('.selectionCount');
-        if (tab.selectedAssets.size > 0) {
-            selectionCount.textContent = `${tab.selectedAssets.size} selected`;
-            bulkActionBar.classList.remove('hidden');
-        } else {
-            bulkActionBar.classList.add('hidden');
-        }
-    }
-    async function performBulkAction(action) {
-        const tab = getActiveTab();
-        const assetsToUpdate = tab.assets.filter(asset => tab.selectedAssets.has(asset.id.toString()));
-        try {
-            const res = await fetch('/api/assets/bulk-action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assets: assetsToUpdate, action })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Bulk action failed');
-            await performSearch(tab.program.name, false);
-        } catch (err) {
-            showError(`Error: ${err.message}`);
-        }
-    }
-    async function performSearch(programName, switchTabs = true) {
-        if (tabs.length >= 5 && !tabs.find(t => t.program.name === programName)) {
-            showError("You can only have a maximum of 5 tabs open.");
-            setTimeout(() => errorMessageDiv.classList.add('hidden'), 5000);
-            return;
-        }
-        if (switchTabs) {
-            const existingTab = tabs.find(t => t.program.name === programName);
-            if (existingTab) {
-                activeTabId = existingTab.id;
-                renderUI();
-                return;
-            }
-        }
-        showLoader();
-        try {
-            const res = await fetch(`/api/programs/search?name=${encodeURIComponent(programName)}`);
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'An unknown error occurred.');
-            logActivity(`Searched for program: "${programName}"`);
-            const tabId = data.program.id;
-            const existingTabIndex = tabs.findIndex(t => t.id === tabId);
-            const newTab = {
-                id: tabId,
-                program: data.program,
-                assets: data.assets,
-                currentSort: { column: 'name', direction: 'asc' },
-                activeFilters: new Set(['smartCampaignBatch', 'smartCampaignTrigger', 'email', 'landingPage', 'form', 'smartList', 'list']),
-                selectedAssets: new Set()
-            };
-            if (existingTabIndex > -1) {
-                tabs[existingTabIndex] = newTab;
-            } else {
-                tabs.push(newTab);
-                createTabContent(tabId);
-            }
-            activeTabId = tabId;
-            renderUI();
-        } catch (err) {
-            showError(`Error: ${err.message}`);
-        } finally {
-            hideLoader();
-        }
+        updateBulkActionBar();
     }
     function addEventListenersToTab(tabContentElement) {
         const tabId = parseInt(tabContentElement.id.replace('tab-content-', ''));
         const tab = () => tabs.find(t => t.id === tabId);
+        
         tabContentElement.addEventListener('change', async function(e) {
             if (e.target.matches('[data-action-toggle]')) {
                 const toggle = e.target;
@@ -478,7 +411,11 @@
                 }
                 toggle.disabled = true;
                 try {
-                    const res = await fetch(endpoint, { method: 'POST' });
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uid: currentUser.uid, connectionId: selectedConnectionId })
+                    });
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.message);
                     const assetToUpdate = tab().assets.find(a => a.id == id);
@@ -487,93 +424,124 @@
                         if (assetType === 'campaign') assetToUpdate.isActive = (action === 'activate');
                         else assetToUpdate.status = (action === 'approve') ? 'approved' : 'draft';
                     }
-                    applyFiltersAndSort();
+                    renderAssets(tab().assets);
                 } catch (err) {
-                    const row = document.getElementById(`asset-${id}`);
-                    const actionCell = row.querySelector('td:last-child');
-                    const errorSpan = document.createElement('div');
-                    errorSpan.className = 'text-red-500 text-xs mt-1 action-error';
-                    errorSpan.textContent = "Action failed. Asset may be in use.";
-                    const existingError = actionCell.querySelector('.action-error');
-                    if(existingError) existingError.remove();
-                    actionCell.appendChild(errorSpan);
-                    toggle.checked = !toggle.checked;
-                    setTimeout(() => errorSpan.remove(), 5000);
+                    toggle.checked = !toggle.checked; // Revert toggle on error
+                    alert(`Action failed: ${err.message}`);
                 } finally {
                     toggle.disabled = false;
                 }
-            }
-        });
-        tabContentElement.querySelector('.selectAllCheckbox').addEventListener('change', (e) => {
-            const isChecked = e.target.checked;
-            const checkboxes = tabContentElement.querySelectorAll('.asset-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = isChecked;
-                const assetId = checkbox.dataset.assetId;
-                if (isChecked) tab().selectedAssets.add(assetId);
-                else tab().selectedAssets.delete(assetId);
-            });
-            updateBulkActionBar();
-        });
-        tabContentElement.addEventListener('change', (e) => {
-            if (e.target.classList.contains('asset-checkbox')) {
-                const assetId = e.target.dataset.assetId;
-                if (e.target.checked) tab().selectedAssets.add(assetId);
-                else tab().selectedAssets.delete(assetId);
+            } else if (e.target.matches('.asset-checkbox') || e.target.matches('.selectAllCheckbox')) {
                 updateBulkActionBar();
             }
         });
-        tabContentElement.querySelector('thead').addEventListener('click', (e) => {
-            const header = e.target.closest('th[data-sort]');
-            if (!header) return;
-            const newSortColumn = header.dataset.sort;
-            if (tab().currentSort.column === newSortColumn) {
-                tab().currentSort.direction = tab().currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                tab().currentSort.column = newSortColumn;
-                tab().currentSort.direction = 'asc';
+
+        tabContentElement.querySelector('.bulkActionBar').addEventListener('click', (e) => {
+            const button = e.target.closest('.bulk-action-btn');
+            if (button) {
+                performBulkAction(button.dataset.action);
             }
-            applyFiltersAndSort();
+        });
+
+        tabContentElement.querySelector('.refresh-btn').addEventListener('click', () => {
+            if (lastSearchTerm) {
+                performSearch(lastSearchTerm, false);
+            }
         });
     }
+    function updateBulkActionBar() {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (!tab) return;
+        const content = document.getElementById(`tab-content-${tab.id}`);
+        const actionBar = content.querySelector('.bulkActionBar');
+        const selectionCount = content.querySelector('.selectionCount');
+        const selectedCheckboxes = content.querySelectorAll('.asset-checkbox:checked');
+        
+        tab.selectedAssets.clear();
+        selectedCheckboxes.forEach(cb => tab.selectedAssets.add(cb.dataset.assetId));
+
+        if (tab.selectedAssets.size > 0) {
+            actionBar.classList.remove('hidden');
+            selectionCount.textContent = `${tab.selectedAssets.size} asset(s) selected`;
+        } else {
+            actionBar.classList.add('hidden');
+        }
+    }
+    async function performBulkAction(action) {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (!tab || tab.selectedAssets.size === 0) return;
+
+        const assetsToUpdate = tab.assets.filter(asset => tab.selectedAssets.has(String(asset.id)));
+        
+        try {
+            const res = await fetch('/api/assets/bulk-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    assets: assetsToUpdate, 
+                    action, 
+                    uid: currentUser.uid, 
+                    connectionId: selectedConnectionId 
+                })
+            });
+            if (!res.ok) throw new Error((await res.json()).message);
+            
+            // Refresh the current search to show updated statuses
+            await performSearch(lastSearchTerm, false);
+
+        } catch (err) {
+            showError(`Bulk action failed: ${err.message}`);
+        }
+    }
+
+    // --- Event Listeners ---
+    searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = programNameInput.value.trim();
+        if (name) {
+            performSearch(name);
+        }
+    });
+    
+    connectionSelector.addEventListener('change', () => {
+        selectedConnectionId = connectionSelector.value;
+        connectionLoaderBar.classList.remove('hidden');
+        const bar = connectionLoaderBar.querySelector('div');
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = '100%'; }, 10);
+        
+        setTimeout(() => {
+            tabs = [];
+            renderUI();
+            connectionLoaderBar.classList.add('hidden');
+            bar.style.width = '0%';
+        }, 2000);
+    });
     mainNav.addEventListener('click', (e) => {
         const navButton = e.target.closest('.nav-link');
         if (navButton && navButton.dataset.page) {
             navigateTo(navButton.dataset.page);
         }
     });
-    searchForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const name = programNameInput.value.trim();
-      if (!name) return;
-      await performSearch(name);
-      programNameInput.value = '';
-    });
-    tabBar.addEventListener('click', (e) => {
-        const tabButton = e.target.closest('.tab-button');
-        const closeButton = e.target.closest('.close-tab-btn');
-        if (closeButton) {
-            e.stopPropagation();
-            const tabIdToClose = parseInt(closeButton.dataset.closeId);
-            tabs = tabs.filter(t => t.id !== tabIdToClose);
-            const tabContent = document.getElementById(`tab-content-${tabIdToClose}`);
-            if (tabContent) tabContent.remove();
-            if (activeTabId === tabIdToClose) {
-                activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
-            }
-            renderUI();
-        } else if (tabButton) {
-            activeTabId = parseInt(tabButton.dataset.tabId);
-            renderUI();
-        }
-    });
+
+    // --- App Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
         navigateTo('programTools'); 
     });
-  </script>
-  <script type="module">
-    import { loadHeader } from '/js/shared-ui.js';
-    loadHeader();
+
+    function navigateTo(pageName) {
+        currentPage = pageName;
+        pages.forEach(page => {
+            page.classList.toggle('hidden', page.id !== `page-${pageName}`);
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            const isSelected = link.dataset.page === pageName;
+            link.classList.toggle('border-blue-600', isSelected);
+            link.classList.toggle('text-blue-600', isSelected);
+            link.classList.toggle('border-transparent', !isSelected);
+            link.classList.toggle('text-gray-500', !isSelected);
+        });
+    }
   </script>
 </body>
 </html>
