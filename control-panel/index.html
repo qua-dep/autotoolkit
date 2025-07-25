@@ -27,26 +27,26 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center h-screen">
+<body class="bg-gray-100 flex items-center justify-center h-screen">
 
-    <div class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+    <div class="w-full max-w-md mx-auto bg-white rounded-2xl shadow-lg p-8">
         <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Server Control Panel</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Manage your `server.js` instance.</p>
+            <h1 class="text-3xl font-bold text-gray-800">Server Control Panel</h1>
+            <p class="text-gray-500 mt-2">Manage your `js/server.js` instance.</p>
         </div>
 
         <!-- Status Indicator -->
-        <div class="flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-8">
+        <div class="flex items-center justify-center bg-gray-100 rounded-lg p-4 mb-8">
             <span id="status-dot" class="w-4 h-4 rounded-full bg-gray-400 mr-3 status-dot"></span>
-            <span id="status-text" class="text-lg font-medium text-gray-700 dark:text-gray-200">Checking...</span>
+            <span id="status-text" class="text-lg font-medium text-gray-700">Checking...</span>
         </div>
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button id="startButton" class="btn w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800">
+            <button id="startButton" class="btn w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-4 focus:ring-green-300">
                 Start Server
             </button>
-            <button id="stopButton" class="btn w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800">
+            <button id="stopButton" class="btn w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-4 focus:ring-red-300">
                 Stop Server
             </button>
         </div>
