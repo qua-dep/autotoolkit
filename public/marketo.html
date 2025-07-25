@@ -241,7 +241,7 @@
                 program: data.program,
                 assets: data.assets,
                 currentSort: { column: 'name', direction: 'asc' },
-                activeFilters: new Set(['smartCampaignBatch', 'smartCampaignTrigger', 'email', 'landingPage', 'form', 'smartList', 'list']),
+                activeFilters: new Set(Object.keys(assetTypeLabels)),
                 selectedAssets: new Set()
             };
 
@@ -262,7 +262,14 @@
         }
     }
 
-    // --- All other page-specific functions are restored here ---
+    // --- Helper Functions ---
+    function getFilterableAssetType(asset) {
+        if (asset.assetType === 'smartCampaign') {
+            return asset.type === 'batch' ? 'smartCampaignBatch' : 'smartCampaignTrigger';
+        }
+        return asset.assetType;
+    }
+
     function logActivity(description) {
         const historyLog = JSON.parse(localStorage.getItem('activityHistory')) || [];
         const newEntry = { description, timestamp: new Date().toISOString() };
@@ -270,19 +277,35 @@
         if (historyLog.length > 100) historyLog.pop();
         localStorage.setItem('activityHistory', JSON.stringify(historyLog));
     }
+
     function getAssetTypeLabel(asset) {
         if (asset.assetType === 'smartCampaign') {
             return asset.type === 'batch' ? assetTypeLabels.smartCampaignBatch : assetTypeLabels.smartCampaignTrigger;
         }
         return assetTypeLabels[asset.assetType] || asset.assetType;
     }
+
     function showLoader() { loader.classList.remove('hidden'); errorMessageDiv.classList.add('hidden'); }
     function hideLoader() { loader.classList.add('hidden'); }
     function showError(message) { errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden'); }
+    
+    // --- UI Rendering ---
     function createTabContent(tabId) {
         const content = document.createElement('div');
         content.id = `tab-content-${tabId}`;
         content.className = 'tab-content hidden';
+
+        let filterCheckboxesHTML = '';
+        for (const [type, label] of Object.entries(assetTypeLabels)) {
+             if (type === 'program') continue;
+             filterCheckboxesHTML += `
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" data-filter-type="${type}" class="asset-filter-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="text-sm text-gray-700">${label}</span>
+                </label>
+             `;
+        }
+
         content.innerHTML = `<div class="p-6">
                 <div class="flex justify-between items-start mb-4">
                     <div class="programDetails grid grid-cols-1 sm:grid-cols-3 gap-6 flex-grow"></div>
@@ -295,6 +318,21 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="filter-controls-container border-t border-b border-gray-200 py-3 mb-4">
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-medium text-gray-700">Filter by Type:</span>
+                        <div class="flex-grow flex items-center flex-wrap gap-x-4 gap-y-2">
+                            ${filterCheckboxesHTML}
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button class="filter-select-all text-sm font-medium text-blue-600 hover:text-blue-800">Select All</button>
+                            <span class="text-gray-300 mx-1">|</span>
+                            <button class="filter-select-none text-sm font-medium text-blue-600 hover:text-blue-800">Select None</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bulkActionBar hidden bg-gray-100 p-3 rounded-md mb-4 flex items-center justify-between">
                     <span class="selectionCount font-medium text-sm text-gray-700"></span>
                     <div>
@@ -316,11 +354,12 @@
                         <tbody class="assetList bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
-                <div class="noAssetsMessage hidden p-6 text-center text-gray-500">No assets found in this program.</div>
+                <div class="noAssetsMessage hidden p-6 text-center text-gray-500">No assets found for the current filter selection.</div>
             </div>`;
         tabContentContainer.appendChild(content);
         addEventListenersToTab(content);
     }
+
     function renderUI() {
         tabBar.innerHTML = '';
         tabs.forEach(tab => {
@@ -339,24 +378,56 @@
                 activeContent.classList.remove('hidden');
                 const activeTab = tabs.find(t => t.id === activeTabId);
                 renderProgramDetails(activeTab.program);
+                renderActiveFilters();
                 renderAssets(activeTab.assets);
             }
         } else {
+            // If no tabs are active, clear the content container
             tabContentContainer.innerHTML = '';
         }
     }
+
     function renderProgramDetails(program) {
         const content = document.querySelector(`#tab-content-${activeTabId} .programDetails`);
         if (!content) return;
         content.innerHTML = `<div><p class="text-sm text-gray-500">Name</p><p class="font-medium text-black">${program.name}</p></div><div><p class="text-sm text-gray-500">ID</p><p class="font-medium text-black">${program.id}</p></div><div><p class="text-sm text-gray-500">Channel</p><p class="font-medium text-black">${program.channel}</p></div>`;
     }
+
+    function renderActiveFilters() {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (!tab) return;
+        const content = document.getElementById(`tab-content-${tab.id}`);
+        const filterCheckboxes = content.querySelectorAll('.asset-filter-checkbox');
+        
+        filterCheckboxes.forEach(checkbox => {
+            const filterType = checkbox.dataset.filterType;
+            checkbox.checked = tab.activeFilters.has(filterType);
+        });
+    }
+
     function renderAssets(assets) {
         const tab = tabs.find(t => t.id === activeTabId);
         const content = document.getElementById(`tab-content-${tab.id}`);
         if (!content) return;
+
         const assetListBody = content.querySelector('.assetList');
+        const noAssetsMessage = content.querySelector('.noAssetsMessage');
         assetListBody.innerHTML = '';
-        assets.forEach(asset => {
+        
+        const filteredAssets = assets.filter(asset => {
+            const type = getFilterableAssetType(asset);
+            return tab.activeFilters.has(type);
+        });
+        
+        if (filteredAssets.length === 0) {
+            noAssetsMessage.classList.remove('hidden');
+            assetListBody.classList.add('hidden');
+        } else {
+            noAssetsMessage.classList.add('hidden');
+            assetListBody.classList.remove('hidden');
+        }
+
+        filteredAssets.forEach(asset => {
             const row = document.createElement('tr');
             row.id = `asset-${asset.id}`;
             let statusHtml = '<span class="text-gray-400">-</span>';
@@ -387,11 +458,13 @@
                 toggleHtml = `<div class="relative inline-block w-10 align-middle select-none"><input type="checkbox" data-asset-type="${asset.assetType === 'smartCampaign' ? 'campaign' : asset.assetType}" data-action-toggle id="toggle-${asset.id}" class="absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer peer transition-transform duration-200 ease-in-out checked:translate-x-4 checked:border-blue-600" ${isChecked ? 'checked' : ''}/><label for="toggle-${asset.id}" class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out peer-checked:bg-blue-600"></label></div>`;
             }
 
-            row.innerHTML = `<td class="p-4">${checkboxHtml}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600"><div class="flex items-center"><div class="w-5 h-5 mr-3">${iconHtml}</div><span>${labelHtml}</span></div></td><td class="p-4 whitespace-nowrap text-sm font-medium text-black">${asset.name}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600">${statusHtml}</td><td class="p-4 text-center"><div class="inline-flex items-center justify-center h-6"><div class="flex-shrink-0">${toggleHtml}</div><div class="w-5 ml-2 flex items-center justify-center">${actionIconHtml}</div></div></td>`;
+            row.innerHTML = `<td class="p-4">${checkboxHtml}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600"><div class="flex items-center"><div class="w-5 h-5 mr-3">${iconHtml}</div><span>${labelHtml}</span></div></td><td class="p-4 whitespace-nowrap text-sm font-medium text-black">${asset.name}</td><td class="p-4 whitespace-nowrap text-sm text-gray-600">${statusHtml}</td><td class="p-4 text-center"><div class="inline-flex items-center justify-center h-6" data-action-container="${asset.id}"><div class="flex-shrink-0">${toggleHtml}</div><div class="w-5 ml-2 flex items-center justify-center">${actionIconHtml}</div></div></td>`;
             assetListBody.appendChild(row);
         });
         updateBulkActionBar();
     }
+
+    // --- Event Handling ---
     function addEventListenersToTab(tabContentElement) {
         const tabId = parseInt(tabContentElement.id.replace('tab-content-', ''));
         const tab = () => tabs.find(t => t.id === tabId);
@@ -399,6 +472,16 @@
         tabContentElement.addEventListener('change', async function(e) {
             if (e.target.matches('[data-action-toggle]')) {
                 const toggle = e.target;
+                const actionContainer = toggle.closest('[data-action-container]');
+                if (!actionContainer) return;
+
+                const toggleWrapper = actionContainer.querySelector('.flex-shrink-0');
+                
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner h-5 w-5 rounded-full border-2 border-gray-200';
+                toggleWrapper.style.display = 'none';
+                actionContainer.prepend(spinner);
+
                 const id = toggle.id.replace('toggle-', '');
                 const assetType = toggle.dataset.assetType;
                 let action, endpoint;
@@ -409,30 +492,78 @@
                     action = toggle.checked ? 'approve' : 'unapprove';
                     endpoint = `/api/${assetType}s/${id}/${action}`;
                 }
-                toggle.disabled = true;
+                
                 try {
-                    const res = await fetch(endpoint, {
+                    const actionPromise = fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ uid: currentUser.uid, connectionId: selectedConnectionId })
                     });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.message);
+                    
+                    const delayPromise = new Promise(resolve => setTimeout(resolve, 2000));
+
+                    const [response] = await Promise.all([actionPromise, delayPromise]);
+
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message);
+                    
                     const assetToUpdate = tab().assets.find(a => a.id == id);
                     if (assetToUpdate) {
                         logActivity(`Changed status of ${assetToUpdate.name} (${assetType} ID: ${id}) to ${action}`);
                         if (assetType === 'campaign') assetToUpdate.isActive = (action === 'activate');
                         else assetToUpdate.status = (action === 'approve') ? 'approved' : 'draft';
                     }
-                    renderAssets(tab().assets);
+                    
                 } catch (err) {
                     toggle.checked = !toggle.checked; // Revert toggle on error
                     alert(`Action failed: ${err.message}`);
                 } finally {
-                    toggle.disabled = false;
+                    renderAssets(tab().assets); // Rerender to remove spinner and show updated state
                 }
-            } else if (e.target.matches('.asset-checkbox') || e.target.matches('.selectAllCheckbox')) {
+            } 
+            else if (e.target.matches('.asset-checkbox')) {
                 updateBulkActionBar();
+            }
+            else if (e.target.matches('.selectAllCheckbox')) {
+                const isChecked = e.target.checked;
+                const assetCheckboxes = tabContentElement.querySelectorAll('.assetList .asset-checkbox');
+                assetCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                updateBulkActionBar();
+            }
+        });
+
+        tabContentElement.querySelector('.filter-controls-container').addEventListener('click', (e) => {
+            const currentTab = tab();
+            if (!currentTab) return;
+
+            let filtersChanged = false;
+
+            if (e.target.matches('.asset-filter-checkbox')) {
+                const filterType = e.target.dataset.filterType;
+                if (e.target.checked) {
+                    currentTab.activeFilters.add(filterType);
+                } else {
+                    currentTab.activeFilters.delete(filterType);
+                }
+                filtersChanged = true;
+            }
+
+            if (e.target.matches('.filter-select-all')) {
+                currentTab.activeFilters = new Set(Object.keys(assetTypeLabels));
+                renderActiveFilters();
+                filtersChanged = true;
+            }
+
+            if (e.target.matches('.filter-select-none')) {
+                currentTab.activeFilters.clear();
+                renderActiveFilters();
+                filtersChanged = true;
+            }
+
+            if (filtersChanged) {
+                renderAssets(currentTab.assets);
             }
         });
 
@@ -449,13 +580,14 @@
             }
         });
     }
+
     function updateBulkActionBar() {
         const tab = tabs.find(t => t.id === activeTabId);
         if (!tab) return;
         const content = document.getElementById(`tab-content-${tab.id}`);
         const actionBar = content.querySelector('.bulkActionBar');
         const selectionCount = content.querySelector('.selectionCount');
-        const selectedCheckboxes = content.querySelectorAll('.asset-checkbox:checked');
+        const selectedCheckboxes = content.querySelectorAll('.assetList .asset-checkbox:checked');
         
         tab.selectedAssets.clear();
         selectedCheckboxes.forEach(cb => tab.selectedAssets.add(cb.dataset.assetId));
@@ -466,7 +598,38 @@
         } else {
             actionBar.classList.add('hidden');
         }
+        updateSelectAllCheckboxState();
     }
+
+    function updateSelectAllCheckboxState() {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (!tab) return;
+        const content = document.getElementById(`tab-content-${tab.id}`);
+        if (!content) return;
+
+        const selectAllCheckbox = content.querySelector('.selectAllCheckbox');
+        const allRenderedCheckboxes = content.querySelectorAll('.assetList .asset-checkbox');
+        const checkedRenderedCheckboxes = content.querySelectorAll('.assetList .asset-checkbox:checked');
+
+        if (allRenderedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+            return;
+        }
+
+        if (checkedRenderedCheckboxes.length === allRenderedCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedRenderedCheckboxes.length > 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
+    }
+
+
     async function performBulkAction(action) {
         const tab = tabs.find(t => t.id === activeTabId);
         if (!tab || tab.selectedAssets.size === 0) return;
@@ -486,7 +649,6 @@
             });
             if (!res.ok) throw new Error((await res.json()).message);
             
-            // Refresh the current search to show updated statuses
             await performSearch(lastSearchTerm, false);
 
         } catch (err) {
@@ -494,7 +656,7 @@
         }
     }
 
-    // --- Event Listeners ---
+    // --- Main Event Listeners ---
     searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const name = programNameInput.value.trim();
@@ -503,6 +665,33 @@
         }
     });
     
+    // **FIX**: Added event listener for tab navigation and closing
+    tabBar.addEventListener('click', (e) => {
+        const tabButton = e.target.closest('.tab-button');
+        const closeButton = e.target.closest('.close-tab-btn');
+
+        if (closeButton) {
+            e.stopPropagation(); // Prevent the tab-button click from firing
+            const tabIdToRemove = parseInt(closeButton.dataset.closeId, 10);
+            const tabIndexToRemove = tabs.findIndex(t => t.id === tabIdToRemove);
+
+            if (tabIndexToRemove > -1) {
+                tabs.splice(tabIndexToRemove, 1);
+                // If the closed tab was the active one, find a new active tab
+                if (activeTabId === tabIdToRemove) {
+                    activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
+                }
+                renderUI();
+            }
+        } else if (tabButton) {
+            const newActiveTabId = parseInt(tabButton.dataset.tabId, 10);
+            if (newActiveTabId !== activeTabId) {
+                activeTabId = newActiveTabId;
+                renderUI();
+            }
+        }
+    });
+
     connectionSelector.addEventListener('change', () => {
         selectedConnectionId = connectionSelector.value;
         connectionLoaderBar.classList.remove('hidden');
@@ -517,6 +706,7 @@
             bar.style.width = '0%';
         }, 2000);
     });
+
     mainNav.addEventListener('click', (e) => {
         const navButton = e.target.closest('.nav-link');
         if (navButton && navButton.dataset.page) {
