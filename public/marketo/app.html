@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketo Dashboard - autotoolkit.io</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-white text-black font-sans">
+
+  <!-- The header is injected by shared-ui.js -->
+  
+  <!-- NEW: Container for toast notifications -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 w-full max-w-xs"></div>
+
+  <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+        <nav id="main-nav" class="mt-4 flex items-center gap-2 border-b border-gray-200">
+            <button data-page="programTools" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">Program Tools</button>
+            <button data-page="assetSearch" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">Asset Search</button>
+            <button data-page="history" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">History</button>
+            <button data-page="debug" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">Debug</button>
+        </nav>
+    </div>
+
+    <main id="app-container">
+        <div id="no-connections-message" class="hidden text-center py-16 px-6 bg-gray-50 rounded-lg border">
+            <h2 class="text-xl font-semibold text-gray-800">No Connections Found</h2>
+            <p class="text-gray-600 mt-2">To use the Marketo tools, you first need to add your Marketo instance credentials.</p>
+            <a href="/settings.html" class="mt-4 inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors">
+                Go to Settings
+            </a>
+        </div>
+        <div id="app-content" class="hidden">
+            <div id="tool-content-container"></div>
+        </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { auth } from '/js/firebase-init.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { loadHeader } from '/js/shared-ui.js';
+    
+    import { initProgramTools } from '/js/marketo/program-tools.js';
+    import { initAssetSearch } from '/js/marketo/asset-search.js';
+    import { initHistory } from '/js/marketo/history.js';
+    import { initDebugLog } from '/js/marketo/debug-log.js';
+
+    loadHeader();
+
+    let currentUser = null;
+    let connections = [];
+    let selectedConnectionId = null;
+    let currentPage = 'programTools'; 
+
+    let programToolsState = {
+        tabs: [],
+        activeTabId: null,
+    };
+    
+    const appContent = document.getElementById('app-content');
+    const noConnectionsMessage = document.getElementById('no-connections-message');
+    const mainNav = document.getElementById('main-nav');
+    const toolContentContainer = document.getElementById('tool-content-container');
+    const appHeaderControls = document.getElementById('app-header-controls');
+    const appTitleContainer = document.getElementById('app-title-container');
+    const toastContainer = document.getElementById('toast-container');
+
+    const appManager = {
+        getCurrentUser: () => currentUser,
+        getSelectedConnectionId: () => selectedConnectionId,
+        showToast: (message, type = 'info') => {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+            };
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-md text-white shadow-lg transition-all duration-300 transform translate-x-full ${colors[type]}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 4000);
+        },
+        getProgramToolsState: () => programToolsState,
+        addProgramTab: (newTab) => {
+            const existingTabIndex = programToolsState.tabs.findIndex(t => t.id === newTab.id);
+            if (existingTabIndex > -1) {
+                programToolsState.tabs[existingTabIndex] = newTab;
+            } else {
+                if (programToolsState.tabs.length >= 5) {
+                    programToolsState.tabs.shift(); 
+                }
+                programToolsState.tabs.push(newTab);
+            }
+            programToolsState.activeTabId = newTab.id;
+            navigateTo('programTools');
+        },
+        removeProgramTab: (tabId) => {
+            const tabIndex = programToolsState.tabs.findIndex(t => t.id === tabId);
+            if (tabIndex > -1) {
+                programToolsState.tabs.splice(tabIndex, 1);
+                if (programToolsState.activeTabId === tabId) {
+                    programToolsState.activeTabId = programToolsState.tabs.length > 0
+                        ? programToolsState.tabs[programToolsState.tabs.length - 1].id
+                        : null;
+                }
+            }
+            navigateTo('programTools');
+        },
+        setActiveProgramTab: (tabId) => {
+            programToolsState.activeTabId = tabId;
+            navigateTo('programTools');
+        },
+        updateAssetState: (updatedAsset) => {
+            const tab = programToolsState.tabs.find(t => t.id === programToolsState.activeTabId);
+            if (tab) {
+                const assetIndex = tab.assets.findIndex(a => a.id == updatedAsset.id);
+                if (assetIndex > -1) {
+                    tab.assets[assetIndex] = updatedAsset;
+                }
+            }
+        }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            setupAppHeader();
+            await fetchConnections(user.uid);
+        } else {
+            window.location.href = '/login.html';
+        }
+    });
+
+    function setupAppHeader() {
+        appTitleContainer.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="text-gray-300">/</span>
+                <h1 class="text-lg font-semibold text-gray-800">Marketo</h1>
+            </div>
+        `;
+        appTitleContainer.classList.remove('hidden');
+
+        appHeaderControls.innerHTML = `
+            <div id="connection-selector-container"></div>
+        `;
+    }
+
+    async function fetchConnections(uid) {
+        try {
+            const response = await fetch(`/api/connections/${uid}`);
+            if (!response.ok) throw new Error('Could not fetch connections.');
+            connections = await response.json();
+            
+            if (connections.length === 0) {
+                appContent.classList.add('hidden');
+                noConnectionsMessage.classList.remove('hidden');
+            } else {
+                appContent.classList.remove('hidden');
+                noConnectionsMessage.classList.add('hidden');
+                populateConnectionSelector();
+                navigateTo(currentPage);
+            }
+        } catch (error) {
+            console.error('Error fetching connections:', error);
+            appContent.classList.add('hidden');
+            noConnectionsMessage.classList.remove('hidden');
+            noConnectionsMessage.querySelector('p').textContent = 'An error occurred while loading your connections.';
+        }
+    }
+
+    function populateConnectionSelector() {
+        const container = document.getElementById('connection-selector-container');
+        if (!container) return;
+
+        const select = document.createElement('select');
+        select.id = 'connection-selector';
+        select.className = 'block w-full pl-3 pr-10 py-1.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border';
+        
+        connections.forEach(conn => {
+            const option = document.createElement('option');
+            option.value = conn.id;
+            option.textContent = conn.name;
+            select.appendChild(option);
+        });
+        
+        container.innerHTML = '';
+        container.appendChild(select);
+        selectedConnectionId = select.value;
+
+        select.addEventListener('change', () => {
+            selectedConnectionId = select.value;
+            programToolsState = { tabs: [], activeTabId: null };
+            navigateTo(currentPage);
+        });
+    }
+
+    function navigateTo(pageName) {
+        currentPage = pageName;
+        toolContentContainer.innerHTML = ''; 
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            const isSelected = link.dataset.page === pageName;
+            link.classList.toggle('border-blue-600', isSelected);
+            link.classList.toggle('text-blue-600', isSelected);
+            link.classList.toggle('border-transparent', !isSelected);
+            link.classList.toggle('text-gray-500', !isSelected);
+        });
+
+        switch (pageName) {
+            case 'programTools':
+                initProgramTools(toolContentContainer, appManager);
+                break;
+            case 'assetSearch':
+                initAssetSearch(toolContentContainer, appManager);
+                break;
+            case 'history':
+                initHistory(toolContentContainer, appManager);
+                break;
+            case 'debug':
+                initDebugLog(toolContentContainer, appManager);
+                break;
+        }
+    }
+
+    mainNav.addEventListener('click', (e) => {
+        const navButton = e.target.closest('.nav-link');
+        if (navButton && navButton.dataset.page) {
+            navigateTo(navButton.dataset.page);
+        }
+    });
+  </script>
+</body>
+</html>

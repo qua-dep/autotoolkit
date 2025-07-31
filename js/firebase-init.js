@@ -4,23 +4,44 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCRdqHyT3xFbcsrhTZ3d4vUVSORSh4YzXI",
-  authDomain: "autotoolkit-web-app.firebaseapp.com",
-  projectId: "autotoolkit-web-app",
-  storageBucket: "autotoolkit-web-app.firebasestorage.app",
-  messagingSenderId: "339805363283",
-  appId: "1:339805363283:web:fab4149f211e3a93993aa6",
-  measurementId: "G-V8C9N3F02K"
-};
+// A variable to hold the initialized auth service
+let auth;
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// An async function to fetch config and initialize Firebase
+async function initializeFirebase() {
+  try {
+    // Fetch the configuration from our secure backend endpoint
+    const response = await fetch('/api/config');
+    if (!response.ok) {
+      throw new Error('Could not fetch Firebase config. Is the server running?');
+    }
+    const firebaseConfig = await response.json();
 
-// Initialize Firebase Authentication and get a reference to the service
-const auth = getAuth(app);
+    // Initialize Firebase with the fetched config
+    const app = initializeApp(firebaseConfig);
 
-// Export the initialized 'auth' instance so other scripts can use it
+    // Initialize Firebase Authentication and get a reference to the service
+    auth = getAuth(app);
+    
+    console.log("Firebase initialized successfully.");
+
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+    // You could display an error message to the user on the page
+    document.body.innerHTML = `
+      <div style="padding: 2rem; text-align: center; font-family: sans-serif;">
+        <h1>Error</h1>
+        <p>Could not connect to the application services. Please try again later.</p>
+        <p style="color: #666; font-size: 0.9rem;">${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+// Call the initialization function
+await initializeFirebase();
+
+// Export the initialized 'auth' instance so other scripts can use it.
+// It will be 'undefined' until the async initialization is complete.
+// Other scripts that import 'auth' will get the initialized instance.
 export { auth };

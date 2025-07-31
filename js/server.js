@@ -16,6 +16,27 @@ admin.initializeApp({
 const db = admin.firestore();
 // --- End Firebase Setup ---
 
+// --- Persistent Firestore Logger ---
+async function logToFirestore(uid, level, message, details = {}) {
+    if (!uid) {
+        console.log('Log attempt without UID:', { level, message });
+        return;
+    }
+    try {
+        const logEntry = {
+            level,
+            message,
+            details: JSON.stringify(details, null, 2),
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        };
+        const collection = level === 'DEBUG' ? 'debug-logs' : 'logs';
+        await db.collection('users').doc(uid).collection(collection).add(logEntry);
+    } catch (error) {
+        console.error('FATAL: Failed to write to log collection for user:', uid, error);
+    }
+}
+
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -23,17 +44,77 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/js', express.static(path.join(__dirname, '..', 'js')));
 
-// --- User Profile & Connections API Endpoints ---
+// --- API Endpoints ---
+
+app.get('/api/config', (req, res) => {
+    res.json({
+        apiKey: process.env.PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.PUBLIC_FIREBASE_APP_ID,
+        measurementId: process.env.PUBLIC_FIREBASE_MEASUREMENT_ID,
+    });
+});
+
+app.get('/api/logs/:uid', async (req, res) => {
+    const { uid } = req.params;
+    try {
+        const logsRef = db.collection('users').doc(uid).collection('logs');
+        const snapshot = await logsRef.orderBy('timestamp', 'desc').limit(100).get();
+        if (snapshot.empty) {
+            return res.status(200).json([]);
+        }
+        const logs = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+                id: doc.id, 
+                ...data,
+                timestamp: data.timestamp.toDate().toISOString() 
+            };
+        });
+        res.status(200).json(logs);
+    } catch (error) {
+        console.error(`Error fetching logs for user ${uid}:`, error);
+        res.status(500).json({ message: 'Failed to fetch logs.' });
+    }
+});
+
+app.get('/api/debug-logs/:uid', async (req, res) => {
+    const { uid } = req.params;
+    try {
+        const logsRef = db.collection('users').doc(uid).collection('debug-logs');
+        const snapshot = await logsRef.orderBy('timestamp', 'desc').limit(100).get();
+        if (snapshot.empty) {
+            return res.status(200).json([]);
+        }
+        const logs = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+                id: doc.id, 
+                ...data,
+                timestamp: data.timestamp.toDate().toISOString() 
+            };
+        });
+        res.status(200).json(logs);
+    } catch (error) {
+        console.error(`Error fetching debug logs for user ${uid}:`, error);
+        res.status(500).json({ message: 'Failed to fetch debug logs.' });
+    }
+});
+
 app.post('/api/create-user-profile', async (req, res) => {
-    const { uid, email, firstName, lastName, companyName, phone } = req.body;
+    const { uid, email, firstName, lastName, companyName } = req.body;
     if (!uid || !email) {
         return res.status(400).json({ message: 'Missing UID or email.' });
     }
     try {
         await db.collection('users').doc(uid).set({
-            firstName, lastName, email, companyName, phone,
+            firstName, lastName, email, companyName,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
+        await logToFirestore(uid, 'INFO', 'User profile created');
         res.status(201).json({ message: 'User profile created successfully.' });
     } catch (error) {
         console.error('Error creating user profile in Firestore:', error);
@@ -57,22 +138,16 @@ app.get('/api/user-profile/:uid', async (req, res) => {
 
 app.post('/api/connections', async (req, res) => {
     const { uid, connectionName, munchkinId, clientId, clientSecret } = req.body;
-    if (!uid || !connectionName || !munchkinId || !clientId || !clientSecret) {
-        return res.status(400).json({ message: 'Missing required connection fields.' });
-    }
     try {
         const connectionsRef = db.collection('users').doc(uid).collection('connections');
         const newConnection = await connectionsRef.add({
-            name: connectionName,
-            munchkinId,
-            clientId,
-            clientSecret,
-            type: 'marketo',
+            name: connectionName, munchkinId, clientId, clientSecret, type: 'marketo',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
+        await logToFirestore(uid, 'INFO', 'Marketo connection added', { connectionName, connectionId: newConnection.id });
         res.status(201).json({ message: 'Connection saved successfully.', id: newConnection.id });
     } catch (error) {
-        console.error('Error saving connection:', error);
+        await logToFirestore(uid, 'ERROR', 'Failed to add Marketo connection', { error: error.message });
         res.status(500).json({ message: 'Failed to save connection.' });
     }
 });
@@ -95,22 +170,19 @@ app.get('/api/connections/:uid', async (req, res) => {
 
 app.delete('/api/connections/:uid/:connectionId', async (req, res) => {
     const { uid, connectionId } = req.params;
-    if (!uid || !connectionId) {
-        return res.status(400).json({ message: 'Missing UID or Connection ID.' });
-    }
     try {
         const connectionRef = db.collection('users').doc(uid).collection('connections').doc(connectionId);
         await connectionRef.delete();
-        console.log(`✅ Connection ${connectionId} deleted for user ${uid}.`);
+        await logToFirestore(uid, 'INFO', 'Connection deleted', { connectionId });
         res.status(200).json({ message: 'Connection deleted successfully.' });
     } catch (error) {
-        console.error('Error deleting connection:', error);
+        await logToFirestore(uid, 'ERROR', 'Failed to delete connection', { connectionId, error: error.message });
         res.status(500).json({ message: 'Failed to delete connection.' });
     }
 });
 
 
-// --- REFACTORED Marketo API Section ---
+// --- Marketo API Section ---
 const tokenCache = new Map();
 
 async function getMarketoCredentials(uid, connectionId) {
@@ -125,28 +197,17 @@ async function getMarketoAccessToken({ munchkinId, clientId, clientSecret }) {
     const cacheKey = clientId;
     const cached = tokenCache.get(cacheKey);
     const now = Date.now();
-
     if (cached && now < cached.expiresAt) {
         return cached.accessToken;
     }
-
-    console.log(`🔄 Fetching new Marketo access token for ${munchkinId}...`);
     const url = `https://${munchkinId}.mktorest.com/identity/oauth/token`;
     try {
         const response = await axios.get(url, {
-            params: {
-                grant_type: 'client_credentials',
-                client_id: clientId,
-                client_secret: clientSecret,
-            },
+            params: { grant_type: 'client_credentials', client_id: clientId, client_secret: clientSecret },
         });
-
         const accessToken = response.data.access_token;
         const expiresAt = now + (response.data.expires_in - 60) * 1000;
-        
         tokenCache.set(cacheKey, { accessToken, expiresAt });
-        
-        console.log(`✅ New token acquired for ${munchkinId}.`);
         return accessToken;
     } catch (err) {
         console.error('❌ Error fetching access token:', err.response?.data || err.message);
@@ -154,20 +215,18 @@ async function getMarketoAccessToken({ munchkinId, clientId, clientSecret }) {
     }
 }
 
-
-// --- UPDATED Marketo API Endpoints ---
 app.post('/api/programs/search', async (req, res) => {
   const { name, uid, connectionId } = req.body;
   if (!name || !uid || !connectionId) {
     return res.status(400).json({ message: 'Missing program name, uid, or connectionId' });
   }
 
+  await logToFirestore(uid, 'INFO', 'Program search initiated', { programName: name, connectionId });
   try {
     const credentials = await getMarketoCredentials(uid, connectionId);
     const token = await getMarketoAccessToken(credentials);
     const { munchkinId } = credentials;
 
-    console.log(`🔍 Searching for program: "${name}" in instance ${munchkinId}`);
     const searchRes = await axios.get(`https://${munchkinId}.mktorest.com/rest/asset/v1/program/byName.json`, {
       headers: { Authorization: `Bearer ${token}` },
       params: { name },
@@ -175,6 +234,7 @@ app.post('/api/programs/search', async (req, res) => {
 
     const program = searchRes.data.result?.[0];
     if (!program) {
+      await logToFirestore(uid, 'WARN', 'Program not found', { programName: name });
       return res.status(404).json({ message: 'Program not found' });
     }
     
@@ -184,7 +244,6 @@ app.post('/api/programs/search', async (req, res) => {
         params: { folder: folderParam, maxReturn: 200 }
     };
 
-    console.log(`📂 Fetching asset summaries for program ID ${program.id}...`);
     const [
         campaignSummariesRes, emailSummariesRes, landingPageSummariesRes,
         formsRes, smartListsRes, listsRes
@@ -206,7 +265,7 @@ app.post('/api/programs/search', async (req, res) => {
                 try {
                     const scheduleRes = await axios.get(`https://${munchkinId}.mktorest.com/rest/asset/v1/smartCampaign/${summary.id}/schedule.json`, { headers: { Authorization: `Bearer ${token}` } });
                     detail.schedule = scheduleRes.data.result?.[0];
-                } catch (e) { /* Ignore */ }
+                } catch (e) { /* Ignore schedule fetch errors */ }
             }
             return detail;
         } catch (err) {
@@ -235,122 +294,48 @@ app.post('/api/programs/search', async (req, res) => {
     let allAssets = [...detailedAssets, ...forms, ...smartLists, ...lists];
     allAssets.sort((a, b) => a.name.localeCompare(b.name));
     
-    console.log(`✅ Found ${allAssets.length} total assets.`);
+    await logToFirestore(uid, 'INFO', 'Program search successful', { programName: name, programId: program.id, assetsFound: allAssets.length });
     res.json({ program, assets: allAssets });
 
   } catch (err) {
-    console.error('❌ Error in program search:', err.response?.data || err.message);
+    await logToFirestore(uid, 'ERROR', 'Program search failed', { programName: name, error: err.message, stack: err.stack });
     res.status(500).json({ message: 'An error occurred while searching for the program.' });
   }
 });
 
-// --- Refactored Asset Search Endpoints ---
-app.post('/api/assets/search', async (req, res) => {
-    const { query, uid, connectionId } = req.body;
-    if (!query || query.length < 3) {
-        return res.json([]);
-    }
-    if (!uid || !connectionId) {
-        return res.status(400).json({ message: 'Missing uid or connectionId' });
-    }
-    
-    console.log(`🔍 Searching all assets for: "${query}"`);
-    try {
-        const credentials = await getMarketoCredentials(uid, connectionId);
-        const token = await getMarketoAccessToken(credentials);
-        const { munchkinId } = credentials;
-
-        const assetTypesToSearch = {
-            program: 'programs', email: 'emails', landingPage: 'landingPages',
-            form: 'forms', smartList: 'smartLists'
-        };
-
-        const searchPromises = Object.entries(assetTypesToSearch).map(([type, endpoint]) => 
-            axios.get(`https://${munchkinId}.mktorest.com/rest/asset/v1/${endpoint}.json`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { filterType: 'name', filterValues: query }
-            }).then(response => 
-                (response.data.result || []).map(asset => ({ ...asset, assetType: type }))
-            ).catch(err => {
-                console.warn(`⚠️ Could not search ${type}:`, err.message);
-                return [];
-            })
-        );
-        
-        const resultsByAsset = await Promise.all(searchPromises);
-        const combinedResults = resultsByAsset.flat().sort((a, b) => a.name.localeCompare(b.name));
-        res.json(combinedResults);
-
-    } catch (err) {
-        console.error('❌ Error during global asset search:', err.message);
-        res.status(500).json({ message: 'An error occurred during asset search.' });
-    }
-});
-
-app.post('/api/asset/:assetType/:id', async (req, res) => {
-    const { assetType, id } = req.params;
-    const { uid, connectionId } = req.body;
-
-    if (!uid || !connectionId) {
-        return res.status(400).json({ message: 'Missing uid or connectionId' });
-    }
-
-    const assetTypeToApiPath = {
-        'program': 'program', 'email': 'email', 'landingPage': 'landingPage',
-        'smartCampaign': 'smartCampaign', 'form': 'form', 'smartList': 'smartList', 'list': 'list',
-    };
-
-    const apiPath = assetTypeToApiPath[assetType];
-    if (!apiPath) {
-        return res.status(400).json({ message: 'Unsupported asset type provided.' });
-    }
-
-    console.log(`ℹ️ Fetching details for ${assetType} ID: ${id}`);
-    try {
-        const credentials = await getMarketoCredentials(uid, connectionId);
-        const token = await getMarketoAccessToken(credentials);
-        const { munchkinId } = credentials;
-
-        const detailRes = await axios.get(`https://${munchkinId}.mktorest.com/rest/asset/v1/${apiPath}/${id}.json`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const detail = detailRes.data.result?.[0];
-        if (!detail) {
-            return res.status(404).json({ message: 'Asset not found.' });
-        }
-        res.json(detail);
-
-    } catch (err) {
-        console.error(`❌ Error fetching asset ${assetType} ${id}:`, err.response?.data || err.message);
-        res.status(500).json({ message: `An error occurred while fetching the asset.` });
-    }
-});
-
-
-// --- Action Endpoints ---
 const createActionEndpoint = (assetType, action) => async (req, res) => {
     const { id } = req.params;
     const { uid, connectionId } = req.body; 
 
-    if (!uid || !connectionId) {
-        return res.status(400).json({ message: 'Missing uid or connectionId' });
-    }
+    const logDetails = { assetType, action, assetId: id, connectionId };
+    await logToFirestore(uid, 'INFO', `Action '${action}' initiated for ${assetType}`, logDetails);
 
-    console.log(`▶️ Performing action "${action}" on ${assetType} ID: ${id}`);
     try {
         const credentials = await getMarketoCredentials(uid, connectionId);
         const token = await getMarketoAccessToken(credentials);
         const { munchkinId } = credentials;
 
-        await axios.post(`https://${munchkinId}.mktorest.com/rest/asset/v1/${assetType}/${id}/${action}.json`, null, {
+        const response = await axios.post(`https://${munchkinId}.mktorest.com/rest/asset/v1/${assetType}/${id}/${action}.json`, null, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        res.status(200).json({ message: `${assetType} action successful` });
+        await logToFirestore(uid, 'DEBUG', `Marketo API Success: ${action} ${assetType}`, { request: logDetails, response: response.data });
+
+        const updatedAssetRes = await axios.get(`https://${munchkinId}.mktorest.com/rest/asset/v1/${assetType}/${id}.json`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const updatedAsset = updatedAssetRes.data.result?.[0];
+        if (!updatedAsset) {
+            throw new Error('Failed to fetch updated asset details after action.');
+        }
+
+        await logToFirestore(uid, 'INFO', `Action '${action}' successful for ${assetType}`, { ...logDetails, updatedStatus: updatedAsset.status || updatedAsset.isActive });
+        res.status(200).json({ message: 'Action successful', data: { ...updatedAsset, assetType } });
+
     } catch (err) {
-        const errorMessage = err.response?.data?.errors?.[0]?.message || err.message;
-        console.error(`❌ Error performing action "${action}" on ${assetType} ${id}:`, errorMessage);
-        res.status(500).json({ message: `Failed to perform action on ${assetType}. Reason: ${errorMessage}` });
+        const errorData = err.response?.data || { message: err.message };
+        await logToFirestore(uid, 'ERROR', `Action '${action}' failed for ${assetType}`, { ...logDetails, error: errorData });
+        res.status(500).json({ message: `Failed to perform action on ${assetType}. Reason: ${errorData?.errors?.[0]?.message || err.message}` });
     }
 };
 
@@ -367,7 +352,8 @@ app.post('/api/assets/bulk-action', async (req, res) => {
         return res.status(400).json({ message: 'Invalid request body.' });
     }
 
-    console.log(`▶️ Performing bulk action "${action}" on ${assets.length} assets.`);
+    const logDetails = { action, assetCount: assets.length, assetIds: assets.map(a => a.id) };
+    await logToFirestore(uid, 'INFO', `Bulk action '${action}' initiated`, logDetails);
 
     try {
         const credentials = await getMarketoCredentials(uid, connectionId);
@@ -387,26 +373,32 @@ app.post('/api/assets/bulk-action', async (req, res) => {
                 assetType = 'landingPage';
                 apiAction = action === 'approve' ? 'approveDraft' : 'unapprove';
             } else {
-                return Promise.resolve({ id: asset.id, status: 'skipped', reason: 'Unsupported asset type' });
+                return Promise.resolve({ id: asset.id, status: 'skipped', reason: 'Unsupported asset type for bulk action' });
             }
 
             const url = `https://${munchkinId}.mktorest.com/rest/asset/v1/${assetType}/${asset.id}/${apiAction}.json`;
             return axios.post(url, null, { headers: { Authorization: `Bearer ${token}` } })
-                .then(() => ({ id: asset.id, status: 'success' }))
-                .catch(err => ({ id: asset.id, status: 'failed', reason: err.response?.data?.errors?.[0]?.message || err.message }));
+                .then((response) => {
+                    logToFirestore(uid, 'DEBUG', `Marketo API Success (Bulk): ${action} ${assetType}`, { request: {assetId: asset.id}, response: response.data });
+                    return { id: asset.id, status: 'success' };
+                })
+                .catch(err => {
+                    const errorData = err.response?.data || { message: err.message };
+                    logToFirestore(uid, 'ERROR', `Marketo API Error (Bulk): ${action} ${assetType}`, { request: {assetId: asset.id}, error: errorData });
+                    return { id: asset.id, status: 'failed', reason: errorData?.errors?.[0]?.message || err.message };
+                });
         });
 
         const results = await Promise.all(actionPromises);
-        console.log('✅ Bulk action complete.', results);
+        
+        await logToFirestore(uid, 'INFO', `Bulk action '${action}' completed`, { ...logDetails, results });
         res.status(200).json({ message: 'Bulk action completed.', results });
 
     } catch (err) {
-        console.error('❌ Error during bulk action:', err.message);
+        await logToFirestore(uid, 'ERROR', `Bulk action '${action}' failed`, { ...logDetails, error: err.message });
         res.status(500).json({ message: 'An error occurred during the bulk action.' });
     }
 });
 
-
-// Server start
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
