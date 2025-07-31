@@ -1,6 +1,39 @@
+/* General Body Styles */
+body {
+    color: #111827;
+}
+
+/* Custom Asset Table Styles */
+.asset-table thead {
+    background-color: white;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.asset-table th {
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #111827;
+}
+
+.asset-table th.actions-header {
+    text-align: center;
+}
+
+.asset-table tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.asset-table td {
+    padding: 1rem;
+}
+
 /* Spinner animation for loaders */
 .spinner {
-    border-top-color: #3b82f6; /* Tailwind's blue-500 */
+    border-top-color: #3b82f6;
     animation: spin 1s linear infinite;
 }
 
@@ -8,4 +41,47 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* API Usage Bar Styles */
+.api-usage-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the content */
+    gap: 1rem; /* 16px */
+    font-size: 0.75rem; /* 12px */
+    color: #4b5563; /* gray-600 */
+}
+
+.api-usage-label {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.api-usage-progress-bg {
+    width: 200px; /* Give the progress bar a fixed width */
+    height: 0.5rem;
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.api-usage-progress-fg {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.5s ease-in-out;
+}
+
+.api-usage-text {
+    font-family: monospace;
+    font-weight: 500;
+    white-space: nowrap;
+    width: 110px; /* Give a fixed width to prevent layout shifts */
+}
+
+.api-reset-timer {
+    font-family: monospace;
+    font-weight: 500;
+    white-space: nowrap;
+    color: #6b7280; /* gray-500 */
 }

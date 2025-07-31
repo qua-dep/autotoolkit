@@ -7,14 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body class="bg-white text-black font-sans">
+<body class="bg-white text-black font-sans flex flex-col min-h-screen">
 
   <!-- The header is injected by shared-ui.js -->
   
-  <!-- NEW: Container for toast notifications -->
   <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 w-full max-w-xs"></div>
 
-  <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+  <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 flex-grow">
     <div class="mb-6">
         <nav id="main-nav" class="mt-4 flex items-center gap-2 border-b border-gray-200">
             <button data-page="programTools" class="nav-link text-sm font-medium py-2 px-4 -mb-px border-b-2">Program Tools</button>
@@ -38,6 +37,20 @@
     </main>
   </div>
 
+  <!-- Updated API Usage Footer -->
+  <footer class="sticky bottom-0 bg-white border-t border-gray-200">
+      <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
+          <div class="api-usage-bar">
+              <span class="api-usage-label">App API Calls Today:</span>
+              <span id="api-usage-text" class="api-usage-text">0 / 50,000</span>
+              <div class="api-usage-progress-bg">
+                  <div id="api-usage-progress" class="api-usage-progress-fg"></div>
+              </div>
+              <span id="api-reset-timer" class="api-reset-timer"></span>
+          </div>
+      </div>
+  </footer>
+
   <script type="module">
     import { auth } from '/js/firebase-init.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -54,6 +67,8 @@
     let connections = [];
     let selectedConnectionId = null;
     let currentPage = 'programTools'; 
+    let apiCallCount = 0;
+    let resetTimerInterval = null;
 
     let programToolsState = {
         tabs: [],
@@ -67,6 +82,9 @@
     const appHeaderControls = document.getElementById('app-header-controls');
     const appTitleContainer = document.getElementById('app-title-container');
     const toastContainer = document.getElementById('toast-container');
+    const apiUsageProgress = document.getElementById('api-usage-progress');
+    const apiUsageText = document.getElementById('api-usage-text');
+    const apiResetTimer = document.getElementById('api-reset-timer');
 
     const appManager = {
         getCurrentUser: () => currentUser,
@@ -90,6 +108,11 @@
                 toast.classList.add('opacity-0');
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 4000);
+        },
+        incrementApiUsage: (count = 1) => {
+            apiCallCount += count;
+            localStorage.setItem('apiCallCount', apiCallCount);
+            updateApiUsageBar();
         },
         getProgramToolsState: () => programToolsState,
         addProgramTab: (newTab) => {
@@ -132,10 +155,76 @@
         }
     };
 
+    function updateApiUsageBar() {
+        const limit = 50000;
+        const used = apiCallCount;
+        const percentage = Math.min((used / limit) * 100, 100);
+
+        apiUsageText.textContent = `${used.toLocaleString()} / ${limit.toLocaleString()}`;
+        apiUsageProgress.style.width = `${percentage}%`;
+
+        apiUsageProgress.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500');
+        if (percentage > 90) {
+            apiUsageProgress.classList.add('bg-red-500');
+        } else if (percentage > 70) {
+            apiUsageProgress.classList.add('bg-yellow-500');
+        } else {
+            apiUsageProgress.classList.add('bg-green-500');
+        }
+    }
+
+    function startResetTimer() {
+        if (resetTimerInterval) clearInterval(resetTimerInterval);
+
+        const updateTimer = () => {
+            const now = new Date();
+            // Get time in UTC, then adjust for CST (UTC-6) or CDT (UTC-5)
+            // We'll use CDT (UTC-5) as it covers most of the year.
+            const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const nowCST = new Date(nowUTC - (3600000 * 5));
+
+            const tomorrowCST = new Date(nowCST);
+            tomorrowCST.setDate(tomorrowCST.getDate() + 1);
+            tomorrowCST.setHours(0, 0, 0, 0);
+
+            const diff = tomorrowCST - nowCST;
+            
+            if (diff <= 0) {
+                // If timer reaches zero, reset the count
+                apiCallCount = 0;
+                localStorage.setItem('apiCallCount', '0');
+                localStorage.setItem('lastResetDate', new Date().toLocaleDateString());
+                updateApiUsageBar();
+            }
+
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            apiResetTimer.textContent = `Resets in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        };
+
+        updateTimer();
+        resetTimerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function initializeApiCounter() {
+        const lastReset = localStorage.getItem('lastResetDate');
+        const today = new Date().toLocaleDateString();
+        if (lastReset !== today) {
+            localStorage.setItem('apiCallCount', '0');
+            localStorage.setItem('lastResetDate', today);
+        }
+        apiCallCount = parseInt(localStorage.getItem('apiCallCount') || '0', 10);
+        updateApiUsageBar();
+    }
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
             setupAppHeader();
+            initializeApiCounter();
+            startResetTimer();
             await fetchConnections(user.uid);
         } else {
             window.location.href = '/login.html';
